@@ -6,8 +6,6 @@
 <title>🏪 Finn's Tour de Trinkhalle</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Permanent+Marker&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 :root{
   --y:#FFE600;--g:#39FF14;--p:#FF2D78;--b:#00F5FF;--o:#FF7A00;
@@ -129,8 +127,6 @@ code{background:var(--d3);color:var(--b);padding:.15rem .4rem;border-radius:3px;
 
 .progwrap{background:var(--d3);height:6px;border-radius:3px;overflow:hidden;margin-top:.5rem;}
 .progfill{height:100%;background:var(--g);box-shadow:0 0 5px rgba(57,255,20,.4);transition:width .5s;}
-/* Leaflet home map tooltip labels */
-.map-num{background:none!important;border:none!important;box-shadow:none!important;font-weight:700;font-size:9px;color:#000;padding:0!important;margin:0!important;}
 
 .tabrow{display:flex;border-bottom:1px solid var(--d4);margin-bottom:1.2rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
 .tabrow::-webkit-scrollbar{display:none;}
@@ -313,17 +309,60 @@ create policy "open" on submissions for all using (true) with check (true);
     </div>
   </div>
 
-  <!-- LEAFLET ROUTE MAP -->
+  <!-- SVG ROUTE MAP -->
   <div class="card" style="padding:.8rem">
     <div style="font-family:'Bebas Neue';font-size:1rem;color:var(--y);letter-spacing:2px;margin-bottom:.5rem">&#x1F5FA;&#xFE0F; ROUTE-ÜBERSICHT</div>
-    <div id="home-map" style="height:260px;border-radius:6px;overflow:hidden;position:relative;z-index:0"></div>
-    <div class="tiny mt1 cm" style="text-align:center">
-      <span style="color:#FF6B35">━━</span> Route A &nbsp;
-      <span style="color:#00D4FF">━━</span> Route B &nbsp;
-      <span style="color:#39FF14">━━</span> Route C &nbsp;&nbsp;
-      <span style="color:#FF7A00">●</span> Meetup &nbsp;
-      <span style="color:#FF7A00">○</span> Exklusiv
-    </div>
+    <div style="font-size:.6rem;color:var(--m);letter-spacing:1px;margin-bottom:.4rem">&#x2190; ALTSTADT &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; GERRESHEIM &#x2192;</div>
+    <svg viewBox="0 0 340 185" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:4px;background:#0e0e0e">
+      <line x1="0" y1="92" x2="340" y2="92" stroke="#1e1e1e" stroke-width="1"/>
+      <line x1="170" y1="0" x2="170" y2="185" stroke="#1e1e1e" stroke-width="1"/>
+      <!-- Route C -->
+      <polyline points="290,60 268,42 200,75 176,112 145,75 46,114 85,82 35,97" fill="none" stroke="#39FF14" stroke-width="2" stroke-opacity="0.5" stroke-dasharray="5,3"/>
+      <!-- Route B -->
+      <polyline points="290,60 298,33 200,75 204,47 145,75 74,50 85,82 35,97" fill="none" stroke="#00D4FF" stroke-width="2.5" stroke-opacity="0.6" stroke-dasharray="5,3"/>
+      <!-- Route A -->
+      <polyline points="290,60 278,98 200,75 188,107 145,75 100,97 85,82 35,97" fill="none" stroke="#FF6B35" stroke-width="2.5" stroke-opacity="0.7" stroke-dasharray="5,3"/>
+      <!-- Route A exclusives -->
+      <circle cx="278" cy="98" r="5" fill="#FF6B35" opacity="0.9"/>
+      <circle cx="188" cy="107" r="5" fill="#FF6B35" opacity="0.9"/>
+      <circle cx="100" cy="97" r="5" fill="#FF6B35" opacity="0.9"/>
+      <!-- Route B exclusives -->
+      <circle cx="298" cy="33" r="5" fill="#00D4FF" opacity="0.9"/>
+      <circle cx="204" cy="47" r="5" fill="#00D4FF" opacity="0.9"/>
+      <circle cx="74" cy="50" r="5" fill="#00D4FF" opacity="0.9"/>
+      <!-- Route C exclusives -->
+      <circle cx="268" cy="42" r="5" fill="#39FF14" opacity="0.9"/>
+      <circle cx="176" cy="112" r="5" fill="#39FF14" opacity="0.9"/>
+      <circle cx="46" cy="114" r="5" fill="#39FF14" opacity="0.9"/>
+      <!-- Shared stations -->
+      <circle cx="290" cy="60" r="9" fill="#FF7A00" stroke="#FFE600" stroke-width="2"/>
+      <text x="290" y="64" text-anchor="middle" font-size="8" fill="#000" font-family="monospace" font-weight="bold">1</text>
+      <circle cx="200" cy="75" r="8" fill="#FF7A00" stroke="#FFE600" stroke-width="1.5"/>
+      <text x="200" y="79" text-anchor="middle" font-size="8" fill="#000" font-family="monospace" font-weight="bold">3</text>
+      <circle cx="145" cy="75" r="8" fill="#FF7A00" stroke="#FFE600" stroke-width="1.5"/>
+      <text x="145" y="79" text-anchor="middle" font-size="8" fill="#000" font-family="monospace" font-weight="bold">5</text>
+      <circle cx="85" cy="82" r="8" fill="#FF7A00" stroke="#FFE600" stroke-width="1.5"/>
+      <text x="85" y="86" text-anchor="middle" font-size="8" fill="#000" font-family="monospace" font-weight="bold">7</text>
+      <circle cx="35" cy="97" r="10" fill="#FFE600" stroke="#fff" stroke-width="2"/>
+      <text x="35" y="101" text-anchor="middle" font-size="8" fill="#000" font-family="monospace" font-weight="bold">8</text>
+      <!-- Labels -->
+      <text x="290" y="77" text-anchor="middle" font-size="6" fill="#FF7A00" font-family="monospace">START</text>
+      <text x="35" y="115" text-anchor="middle" font-size="6" fill="#FFE600" font-family="monospace">FINALE</text>
+      <text x="200" y="89" text-anchor="middle" font-size="5.5" fill="#777" font-family="monospace">MEET 1</text>
+      <text x="145" y="89" text-anchor="middle" font-size="5.5" fill="#777" font-family="monospace">MEET 2</text>
+      <text x="85" y="97" text-anchor="middle" font-size="5.5" fill="#777" font-family="monospace">MEET 3</text>
+      <!-- Legend -->
+      <rect x="5" y="152" width="330" height="28" rx="3" fill="#141414"/>
+      <circle cx="20" cy="166" r="5" fill="#FF7A00" stroke="#FFE600" stroke-width="1.5"/>
+      <text x="29" y="170" font-size="7" fill="#FFE600" font-family="monospace">MEETUP</text>
+      <line x1="85" y1="162" x2="102" y2="162" stroke="#FF6B35" stroke-width="2.5" stroke-dasharray="4,2"/>
+      <text x="106" y="166" font-size="7" fill="#FF6B35" font-family="monospace">ROUTE A</text>
+      <line x1="157" y1="162" x2="174" y2="162" stroke="#00D4FF" stroke-width="2.5" stroke-dasharray="4,2"/>
+      <text x="178" y="166" font-size="7" fill="#00D4FF" font-family="monospace">ROUTE B</text>
+      <line x1="229" y1="162" x2="246" y2="162" stroke="#39FF14" stroke-width="2.5" stroke-dasharray="4,2"/>
+      <text x="250" y="166" font-size="7" fill="#39FF14" font-family="monospace">ROUTE C</text>
+    </svg>
+    <div class="tiny mt1 cm" style="text-align:center">Zahlen = Stationsreihenfolge &nbsp;·&nbsp; Grosse Punkte = alle Teams</div>
   </div>
 
   <div class="card card-p">
@@ -765,7 +804,7 @@ function nav(id){
   if(nb)nb.classList.add('active');
   window.scrollTo(0,0);
   if(id==='leaderboard')renderLB();
-  if(id==='home'){updateStats();setTimeout(initHomeMap,100);}
+  if(id==='home')updateStats();
   if(id==='meinteam'&&currentCode)loadTeamByCode(currentCode);
   if(id==='admin'&&document.getElementById('adm-panel').style.display!=='none'){renderAdmSubs();renderAdmTeams();}
 }
@@ -802,19 +841,8 @@ function getPool(){ return _pool || DEFAULT_POOL; }
 async function loadPool(){
   try{
     const {data} = await sb.from('settings').select('value').eq('key','task_pool').single();
-    if(data){
-      const parsed = JSON.parse(data.value);
-      // Migration check: neues Format hat teamTasks Array
-      if(parsed && Array.isArray(parsed.teamTasks)){
-        _pool = parsed;
-      } else {
-        // Altes Stations-Format -> DEFAULT_POOL nehmen und gleich neu speichern
-        _pool = JSON.parse(JSON.stringify(DEFAULT_POOL));
-        await sb.from('settings').upsert({key:'task_pool', value:JSON.stringify(_pool)});
-      }
-    } else {
-      _pool = JSON.parse(JSON.stringify(DEFAULT_POOL));
-    }
+    if(data) _pool = JSON.parse(data.value);
+    else _pool = JSON.parse(JSON.stringify(DEFAULT_POOL));
   }catch(e){ _pool = JSON.parse(JSON.stringify(DEFAULT_POOL)); }
 }
 function getWaNum(){return localStorage.getItem('ft_wa')||'';}
@@ -848,8 +876,8 @@ function setLocalTeamCache(team){ if(team) teamCache[team.code]=team; }
 
 function drawTasksForStation(sid){
   const pool = getPool();
-  const tasks = Array.isArray(pool.teamTasks)?pool.teamTasks:[];
-  const wilds = Array.isArray(pool.wildcards)?pool.wildcards:[];
+  const tasks = pool.teamTasks || [];
+  const wilds = pool.wildcards || [];
   // 2 verschiedene Team-Aufgaben
   const shuffled = [...tasks].sort(()=>Math.random()-0.5);
   const t1 = shuffled[0] || 'Aufgabe folgt...';
@@ -1345,8 +1373,6 @@ function renderPoolEditor(){
 
 function addTask(type){
   const pool=getPool();
-  if(!Array.isArray(pool.teamTasks))pool.teamTasks=[];
-  if(!Array.isArray(pool.wildcards))pool.wildcards=[];
   const text=prompt(type==='team'?'Neue Team-Aufgabe:':'Neue Wildcard:','');
   if(text&&text.trim()){
     if(type==='team') pool.teamTasks.push(text.trim());
@@ -1435,41 +1461,6 @@ async function updateStats(){
 }
 
 // ============================================================
-// HOME MAP (Leaflet + CartoDB Positron = Apple Maps Style)
-// ============================================================
-let _homeMap = null;
-
-function initHomeMap(){
-  const el = document.getElementById('home-map');
-  if(!el) return;
-  if(_homeMap){ _homeMap.invalidateSize(); return; }
-  _homeMap = L.map('home-map', {
-    center:[51.228, 6.820], zoom:13,
-    zoomControl:false, attributionControl:false,
-    dragging:true, scrollWheelZoom:false, doubleClickZoom:false
-  });
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(_homeMap);
-  const shared = [[51.2345,6.8615],[51.2309,6.8166],[51.2304,6.8094],[51.2279,6.7896],[51.2265,6.7757]];
-  const sLabels = ['1','3','5','7','8'];
-  const excl = {A:[[51.2239,6.8639],[51.2288,6.8148],[51.2286,6.7879]],B:[[51.2369,6.8590],[51.2283,6.8149],[51.2371,6.7934]],C:[[51.2353,6.8617],[51.2226,6.8028],[51.2286,6.7724]]};
-  const colors = {A:'#FF6B35',B:'#00D4FF',C:'#39FF14'};
-  Object.keys(excl).forEach(r=>{
-    const coords=[shared[0],excl[r][0],shared[1],excl[r][1],shared[2],excl[r][2],shared[3],shared[4]];
-    L.polyline(coords,{color:colors[r],weight:3.5,opacity:0.8,dashArray:'8,5'}).addTo(_homeMap);
-  });
-  Object.keys(excl).forEach(r=>{
-    excl[r].forEach(ll=>{
-      L.circleMarker(ll,{radius:6,fillColor:colors[r],color:'#fff',weight:2,fillOpacity:0.9}).addTo(_homeMap);
-    });
-  });
-  shared.forEach((ll,i)=>{
-    const isFin=i===4;
-    L.circleMarker(ll,{radius:isFin?11:8,fillColor:isFin?'#FFE600':'#FF7A00',color:'#fff',weight:2,fillOpacity:1}).addTo(_homeMap).bindTooltip(sLabels[i],{permanent:true,direction:'center',className:'map-num'});
-  });
-}
-
-
-// ============================================================
 // INIT
 // ============================================================
 document.getElementById('st-modal').addEventListener('click',e=>{
@@ -1489,7 +1480,6 @@ document.getElementById('st-modal').addEventListener('click',e=>{
       loadGmPassword();
       loadPool();
       loadStartTime();
-      setTimeout(initHomeMap, 500);
     }catch(e){
       hideLoading();
       setConnected(false);
