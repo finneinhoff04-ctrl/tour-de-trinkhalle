@@ -661,8 +661,8 @@ let _gmPw = 'finn2026';
 // SUPABASE
 // ──────────────────────────────────────────────────────────────────────────────
 // ► Trag hier einmalig deine Supabase-Daten ein (Project Settings → API)
-const SUPABASE_URL = 'https://aodpwasmvrayvertmdqb.supabase.co';  // https://xyz.supabase.co
-const SUPABASE_KEY = 'sb_publishable_fYNYf0pCo7eyAXNjqkwZmQ_eTV5zUXk';   // eyJhbGci...
+const SUPABASE_URL = 'DEINE_URL_HIER';  // https://xyz.supabase.co
+const SUPABASE_KEY = 'DEIN_KEY_HIER';   // eyJhbGci...
 
 function getSavedConfig(){
   return {
@@ -1098,7 +1098,7 @@ async function submitEvidence(){
     if(e1) throw e1;
 
     const note = speedBonus ? '⚡ Speed-Bonus +15' : '';
-    await sb.from('submissions').insert({id:Date.now(), team_code:code, station_id:sid, submitted_at:Date.now(), points:pts, note}).catch(()=>{});
+    try{ await sb.from('submissions').insert({id:Date.now(), team_code:code, station_id:sid, submitted_at:Date.now(), points:pts, note}); }catch(_){}
 
     hideLoading();
     document.getElementById('modal-actions').style.display = 'none';
