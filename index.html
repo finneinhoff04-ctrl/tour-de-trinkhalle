@@ -660,10 +660,14 @@ let _gmPw = 'finn2026';
 // ──────────────────────────────────────────────────────────────────────────────
 // SUPABASE
 // ──────────────────────────────────────────────────────────────────────────────
+// ► Trag hier einmalig deine Supabase-Daten ein (Project Settings → API)
+const SUPABASE_URL = 'DEINE_URL_HIER';  // https://xyz.supabase.co
+const SUPABASE_KEY = 'DEIN_KEY_HIER';   // eyJhbGci...
+
 function getSavedConfig(){
   return {
-    url: localStorage.getItem('sb_url') || '',
-    key: localStorage.getItem('sb_key') || ''
+    url: localStorage.getItem('sb_url') || SUPABASE_URL,
+    key: localStorage.getItem('sb_key') || SUPABASE_KEY
   };
 }
 
