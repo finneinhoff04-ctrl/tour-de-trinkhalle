@@ -1,0 +1,47 @@
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+
+Deno.serve(async (req) => {
+  // CORS für Browser-Redirects
+  if (req.method === 'OPTIONS') {
+    return new Response(null, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET',
+      }
+    })
+  }
+
+  const url = new URL(req.url)
+  const team  = url.searchParams.get('team')  || ''
+  const name  = url.searchParams.get('name')  || team
+  const station = url.searchParams.get('station') || ''
+
+  // Supabase mit Service-Role-Key (hat Zugriff auf settings-Tabelle)
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  )
+
+  const { data, error } = await supabase
+    .from('settings')
+    .select('value')
+    .eq('key', 'gm_wa_number')
+    .single()
+
+  if (error || !data?.value) {
+    return new Response('WA-Nummer nicht konfiguriert. Bitte im GM-Panel eintragen.', {
+      status: 500,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+    })
+  }
+
+  const text = encodeURIComponent(
+    `🏪 FINN'S TOUR DE TRINKHALLE\nTeam: ${name} (${team})\nStation: ${station}\n\nHier ist unser Check-in! 📍`
+  )
+
+  // 302-Redirect → Nummer nie im Browser sichtbar
+  return new Response(null, {
+    status: 302,
+    headers: { Location: `https://wa.me/${data.value}?text=${text}` }
+  })
+})

@@ -1,47 +1,1516 @@
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>🏪 Finn's Tour de Trinkhalle</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+:root{
+  --y:#FFE600;--g:#39FF14;--p:#FF2D78;--b:#00F5FF;--o:#FF7A00;
+  --d0:#080808;--d1:#0F0F0F;--d2:#181818;--d3:#222;--d4:#2E2E2E;
+  --t:#F0F0F0;--m:#777;--bnh:64px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{font-size:16px;}
+body{background:var(--d0);color:var(--t);font-family:'Space Mono',monospace;min-height:100vh;overflow-x:hidden;padding-bottom:var(--bnh);}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.04) 2px,rgba(0,0,0,.04) 4px);pointer-events:none;z-index:9998;}
 
-Deno.serve(async (req) => {
-  // CORS für Browser-Redirects
-  if (req.method === 'OPTIONS') {
-    return new Response(null, {
-      headers: {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET',
+.ticker{background:var(--y);color:var(--d0);font-family:'Bebas Neue';font-size:.85rem;letter-spacing:3px;padding:.35rem 0;overflow:hidden;white-space:nowrap;}
+.ticker-inner{display:inline-block;animation:tick 28s linear infinite;}
+@keyframes tick{from{transform:translateX(100vw)}to{transform:translateX(-100%)}}
+
+nav{background:var(--d1);border-bottom:2px solid var(--y);padding:0 1rem;display:flex;align-items:center;justify-content:space-between;height:56px;position:sticky;top:0;z-index:100;box-shadow:0 2px 20px rgba(255,230,0,.2);}
+.logo{font-family:'Bebas Neue';font-size:1.3rem;color:var(--y);letter-spacing:2px;text-shadow:0 0 10px rgba(255,230,0,.4);}
+.conn-dot{width:8px;height:8px;border-radius:50%;background:var(--m);transition:background .3s;}
+.conn-dot.online{background:var(--g);box-shadow:0 0 6px rgba(57,255,20,.6);}
+.conn-dot.error{background:var(--p);}
+
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:var(--d1);border-top:2px solid var(--y);display:flex;z-index:100;height:var(--bnh);box-shadow:0 -2px 20px rgba(255,230,0,.12);}
+.bn-btn{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;color:var(--m);font-family:'Space Mono';font-size:.48rem;letter-spacing:.5px;gap:.18rem;padding:.4rem .1rem;min-height:44px;-webkit-appearance:none;}
+.bn-icon{font-size:1.25rem;line-height:1;}
+.bn-btn.active{color:var(--y);}
+.bn-btn.active .bn-icon{filter:drop-shadow(0 0 4px rgba(255,230,0,.7));}
+
+.page{display:none;padding:1.2rem 1rem;max-width:860px;margin:0 auto;}
+.page.active{display:block;}
+
+#page-setup{display:none;padding:1.5rem 1rem;max-width:560px;margin:0 auto;}
+#page-setup.active{display:block;}
+.setup-step{background:var(--d2);border:1px solid var(--d4);border-radius:6px;padding:1.1rem;margin-bottom:1rem;position:relative;}
+.setup-num{font-family:'Bebas Neue';font-size:2rem;color:var(--d4);position:absolute;right:1rem;top:.5rem;}
+.setup-title{font-family:'Bebas Neue';font-size:1.1rem;color:var(--y);letter-spacing:2px;margin-bottom:.5rem;}
+code{background:var(--d3);color:var(--b);padding:.15rem .4rem;border-radius:3px;font-size:.8rem;word-break:break-all;}
+
+.hero{text-align:center;padding:1.5rem .5rem 1.8rem;}
+.hero-eye{font-family:'Permanent Marker';font-size:1rem;color:var(--p);margin-bottom:.4rem;}
+.hero-title{font-family:'Bebas Neue';font-size:clamp(2.8rem,11vw,5.5rem);line-height:.92;letter-spacing:3px;color:var(--y);text-shadow:0 0 25px rgba(255,230,0,.55),3px 3px 0 rgba(255,45,120,.45);animation:flicker 5s infinite;}
+.hero-sub{font-family:'Permanent Marker';font-size:clamp(1rem,3.5vw,1.3rem);color:var(--b);margin:.6rem 0 1.4rem;}
+@keyframes flicker{0%,100%{opacity:1}91%{opacity:1}92%{opacity:.7}93%{opacity:1}96%{opacity:.9}97%{opacity:1}}
+
+.card{background:var(--d1);border:1px solid var(--d4);border-radius:5px;padding:1.1rem;margin-bottom:1rem;}
+.card-y{border-color:var(--y);box-shadow:0 0 14px rgba(255,230,0,.08);}
+.card-p{border-color:var(--p);}
+.card-g{border-color:var(--g);}
+.card-b{border-color:var(--b);}
+.card-o{border-color:var(--o);}
+
+.stitle{font-family:'Bebas Neue';font-size:1.8rem;letter-spacing:3px;color:var(--y);margin-bottom:1rem;}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:.75rem 1.6rem;font-family:'Bebas Neue';font-size:1.1rem;letter-spacing:2px;cursor:pointer;border:none;transition:all .15s;text-align:center;border-radius:4px;min-height:50px;-webkit-appearance:none;text-decoration:none;}
+.btn:active{transform:scale(.97);}
+.btn-y{background:var(--y);color:var(--d0);}
+.btn-out{background:transparent;color:var(--y);border:2px solid var(--y);}
+.btn-p{background:var(--p);color:#fff;}
+.btn-g{background:var(--g);color:var(--d0);}
+.btn-b{background:var(--b);color:var(--d0);}
+.btn-wa{background:#25D366;color:#fff;}
+.btn-sm{font-size:.8rem;padding:.5rem 1rem;min-height:42px;letter-spacing:1px;}
+.btn-block{display:flex;width:100%;}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+
+.flabel{display:block;font-size:.7rem;letter-spacing:1.5px;color:var(--m);margin-bottom:.4rem;text-transform:uppercase;}
+.finput,.fselect{width:100%;background:var(--d2);border:1px solid var(--d4);border-radius:4px;color:var(--t);font-family:'Space Mono';font-size:16px;padding:.65rem .8rem;transition:border-color .2s;-webkit-appearance:none;appearance:none;}
+.finput:focus,.fselect:focus{outline:none;border-color:var(--y);box-shadow:0 0 8px rgba(255,230,0,.12);}
+.fgroup{margin-bottom:1rem;}
+.member-row{display:flex;gap:.5rem;margin-bottom:.5rem;}
+.member-row .finput{flex:1;}
+.rm-btn{background:none;border:1px solid var(--p);color:var(--p);cursor:pointer;min-width:40px;height:40px;display:flex;align-items:center;justify-content:center;border-radius:4px;flex-shrink:0;font-size:1rem;}
+
+.alert{padding:.75rem .9rem;font-size:.8rem;border:1px solid;border-radius:4px;margin-bottom:.8rem;line-height:1.55;}
+.al-ok{background:rgba(57,255,20,.07);border-color:var(--g);color:var(--g);}
+.al-err{background:rgba(255,45,120,.07);border-color:var(--p);color:var(--p);}
+.al-info{background:rgba(0,245,255,.06);border-color:var(--b);color:var(--b);}
+.al-warn{background:rgba(255,179,0,.07);border-color:#FFB300;color:#FFB300;}
+
+.rt{display:inline-block;font-size:.65rem;padding:.2rem .5rem;border:1px solid;letter-spacing:1px;border-radius:3px;}
+.rt-A{border-color:#ff4444;color:#ff4444;}
+.rt-B{border-color:var(--b);color:var(--b);}
+.rt-C{border-color:var(--g);color:var(--g);}
+.rt-SHARED{border-color:var(--y);color:var(--y);}
+
+.scard{background:var(--d1);border-left:4px solid var(--y);padding:1rem;margin-bottom:.9rem;border-radius:0 5px 5px 0;position:relative;}
+.scard.done{border-left-color:var(--g);opacity:.55;}
+.scard.locked{border-left-color:var(--d4);opacity:.28;}
+.scard.shared{border-left-color:var(--o);}
+.snum{font-family:'Bebas Neue';font-size:2.5rem;color:var(--d3);position:absolute;right:.7rem;top:.2rem;line-height:1;}
+.sname{font-family:'Bebas Neue';font-size:1.1rem;color:var(--y);letter-spacing:1.5px;padding-right:2.5rem;}
+.tlabel{font-size:.65rem;letter-spacing:1.5px;color:var(--m);text-transform:uppercase;margin-top:.75rem;margin-bottom:.3rem;}
+.ttext{font-size:.875rem;line-height:1.6;}
+.ptag{display:inline-block;font-family:'Bebas Neue';font-size:.78rem;padding:.15rem .5rem;letter-spacing:1px;margin-top:.4rem;border-radius:3px;}
+.ptag-y{background:var(--y);color:var(--d0);}
+.ptag-p{background:var(--p);color:#fff;}
+.done-btn{display:block;width:100%;margin-top:.9rem;background:var(--p);color:#fff;font-family:'Bebas Neue';font-size:1.05rem;letter-spacing:2px;border:none;padding:.75rem;cursor:pointer;border-radius:4px;min-height:50px;-webkit-appearance:none;}
+.done-btn:active{opacity:.8;}
+
+.sbadge{font-size:.65rem;padding:.2rem .55rem;letter-spacing:1px;border:1px solid;border-radius:3px;}
+.sb-ok{background:rgba(57,255,20,.1);color:var(--g);border-color:var(--g);}
+.sb-pend{background:rgba(255,179,0,.1);color:#FFB300;border-color:#FFB300;}
+.sb-no{background:rgba(255,45,120,.1);color:var(--p);border-color:var(--p);}
+.sb-act{background:rgba(255,230,0,.1);color:var(--y);border-color:var(--y);}
+.sb-lock{color:var(--m);border-color:var(--d4);}
+
+.lbrow{display:flex;align-items:center;gap:.8rem;padding:.9rem;background:var(--d1);border:1px solid var(--d4);margin-bottom:.5rem;border-radius:5px;}
+.lbrow.r1{border-color:var(--y);background:linear-gradient(90deg,rgba(255,230,0,.07),transparent);}
+.lbrow.r2{border-color:var(--b);background:linear-gradient(90deg,rgba(0,245,255,.05),transparent);}
+.lbrow.r3{border-color:var(--p);background:linear-gradient(90deg,rgba(255,45,120,.05),transparent);}
+.lbrank{font-family:'Bebas Neue';font-size:2rem;min-width:44px;text-align:center;line-height:1;}
+.r1 .lbrank{color:var(--y);text-shadow:0 0 10px rgba(255,230,0,.5);}
+.r2 .lbrank{color:var(--b);}
+.r3 .lbrank{color:var(--p);}
+.lbpts{font-family:'Bebas Neue';font-size:1.8rem;color:var(--g);}
+.lbname{font-family:'Bebas Neue';font-size:1.15rem;letter-spacing:1px;}
+
+.subcard{background:var(--d2);border:1px solid var(--d4);padding:.9rem;margin-bottom:.8rem;border-radius:5px;}
+.pts-inp{background:var(--d0);border:1px solid var(--d4);color:var(--g);font-family:'Bebas Neue';font-size:1.2rem;width:58px;text-align:center;padding:.3rem;border-radius:3px;}
+
+.progwrap{background:var(--d3);height:6px;border-radius:3px;overflow:hidden;margin-top:.5rem;}
+.progfill{height:100%;background:var(--g);box-shadow:0 0 5px rgba(57,255,20,.4);transition:width .5s;}
+/* Leaflet home map tooltip labels */
+.map-num{background:none!important;border:none!important;box-shadow:none!important;font-weight:700;font-size:9px;color:#000;padding:0!important;margin:0!important;}
+
+.tabrow{display:flex;border-bottom:1px solid var(--d4);margin-bottom:1.2rem;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.tabrow::-webkit-scrollbar{display:none;}
+.tabbtn{background:none;border:none;font-family:'Space Mono';font-size:.7rem;padding:.6rem .9rem;cursor:pointer;color:var(--m);border-bottom:2px solid transparent;white-space:nowrap;min-height:44px;letter-spacing:.5px;}
+.tabbtn.active{color:var(--y);border-bottom-color:var(--y);}
+
+.pool-station{background:var(--d2);border:1px solid var(--d4);padding:1rem;margin-bottom:.8rem;border-radius:5px;}
+.pool-sname{font-family:'Bebas Neue';font-size:1rem;color:var(--y);letter-spacing:1.5px;margin-bottom:.6rem;}
+.task-item{display:flex;gap:.5rem;margin-bottom:.5rem;align-items:flex-start;}
+.task-item .finput{font-size:14px;}
+.add-task-btn{background:none;border:1px dashed var(--d4);color:var(--m);cursor:pointer;font-size:.72rem;padding:.5rem .9rem;border-radius:3px;margin-top:.3rem;min-height:40px;width:100%;}
+
+.modal-ov{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+.modal-ov.open{display:flex;}
+.modal{background:var(--d1);border:2px solid var(--y);border-bottom:none;padding:1.2rem 1rem 2.5rem;width:100%;max-width:600px;max-height:88vh;overflow-y:auto;border-radius:14px 14px 0 0;-webkit-overflow-scrolling:touch;}
+.modal-handle{width:40px;height:4px;background:var(--d4);border-radius:2px;margin:0 auto .8rem;}
+
+.codebox{background:var(--d2);border:2px dashed var(--g);padding:1.2rem;text-align:center;border-radius:5px;}
+.code-big{font-family:'Bebas Neue';font-size:3.5rem;color:var(--g);letter-spacing:10px;text-shadow:0 0 16px rgba(57,255,20,.5);}
+
+.igrid{display:grid;grid-template-columns:1fr 1fr;gap:.7rem;margin-bottom:1.2rem;}
+.ibox{background:var(--d2);border:1px solid var(--d4);padding:.9rem;text-align:center;border-radius:5px;}
+.ival{font-family:'Bebas Neue';font-size:2.4rem;line-height:1;}
+.ilabel{font-size:.63rem;letter-spacing:1.5px;color:var(--m);margin-top:.2rem;text-transform:uppercase;}
+
+.loading-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;display:none;align-items:center;justify-content:center;flex-direction:column;gap:1rem;}
+.loading-overlay.show{display:flex;}
+.spinner{width:36px;height:36px;border:3px solid var(--d4);border-top-color:var(--y);border-radius:50%;animation:spin .7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-family:'Bebas Neue';color:var(--y);letter-spacing:3px;font-size:.9rem;}
+
+.cy{color:var(--y)}.cg{color:var(--g)}.cp{color:var(--p)}.cb{color:var(--b)}.cm{color:var(--m)}
+.mt1{margin-top:.5rem}.mt2{margin-top:1rem}.mt3{margin-top:1.5rem}
+.mb1{margin-bottom:.5rem}.mb2{margin-bottom:1rem}
+.flex{display:flex}.gap1{gap:.5rem}.gap2{gap:1rem}.wrap{flex-wrap:wrap}.aic{align-items:center}.jb{justify-content:space-between}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:.8rem;}
+@media(max-width:480px){.g2{grid-template-columns:1fr}}
+.div{border:none;border-top:1px solid var(--d4);margin:1rem 0;}
+.small{font-size:.875rem;line-height:1.65;}
+.tiny{font-size:.72rem;color:var(--m);line-height:1.5;}
+.prize-box{background:var(--d2);border:2px solid var(--y);padding:1.5rem;text-align:center;border-radius:5px;position:relative;overflow:hidden;}
+.prize-box::before{content:'?';position:absolute;font-family:'Bebas Neue';font-size:8rem;color:rgba(255,230,0,.04);right:-1rem;top:-1rem;pointer-events:none;}
+
+@supports(padding-bottom:env(safe-area-inset-bottom)){
+  .bottom-nav{padding-bottom:env(safe-area-inset-bottom);height:calc(var(--bnh) + env(safe-area-inset-bottom));}
+  body{padding-bottom:calc(var(--bnh) + env(safe-area-inset-bottom));}
+}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">LADEN...</div>
+</div>
+
+<div class="ticker">
+  <span class="ticker-inner">🏪 FINN'S TOUR DE TRINKHALLE &nbsp;•&nbsp; BIRTHDAY EDITION DÜSSELDORF &nbsp;•&nbsp; 5 GEMEINSAME STATIONEN &nbsp;•&nbsp; 3 ROUTEN &nbsp;•&nbsp; 1 SIEGER &nbsp;•&nbsp; 🍺 LIVE POWERED BY SUPABASE &nbsp;•&nbsp;</span>
+</div>
+
+<nav>
+  <div class="logo">🏪 FINN'S TOUR</div>
+  <div class="flex aic gap1">
+    <div class="tiny cm" id="conn-label">Verbinde...</div>
+    <div class="conn-dot" id="conn-dot"></div>
+  </div>
+</nav>
+
+<!-- SETUP PAGE -->
+<div id="page-setup">
+  <div class="hero">
+    <div class="hero-eye">⚙️ Einmalig</div>
+    <div class="hero-title" style="font-size:3rem">SUPABASE<br>SETUP</div>
+    <div class="hero-sub">Nur du als Finn machst das – einmal, fertig.</div>
+  </div>
+
+  <div class="setup-step">
+    <div class="setup-num">1</div>
+    <div class="setup-title">Account erstellen</div>
+    <p class="small cm">Geh auf <strong class="cy">supabase.com</strong> → "Start your project" → kostenlos registrieren.</p>
+  </div>
+
+  <div class="setup-step">
+    <div class="setup-num">2</div>
+    <div class="setup-title">Neues Projekt</div>
+    <p class="small cm">„New project" → Name: <code>finns-tour</code> → Region: <code>EU (Frankfurt)</code> → Create.</p>
+  </div>
+
+  <div class="setup-step">
+    <div class="setup-num">3</div>
+    <div class="setup-title">Tabellen anlegen</div>
+    <p class="small cm mb1">SQL Editor → „New query" → einfügen und Run:</p>
+    <div style="background:var(--d3);border:1px solid var(--d4);border-radius:4px;padding:.8rem;font-size:.72rem;color:var(--b);line-height:1.7;overflow-x:auto;">
+create table teams (<br>
+&nbsp;&nbsp;id bigserial primary key,<br>
+&nbsp;&nbsp;code text unique not null,<br>
+&nbsp;&nbsp;name text not null,<br>
+&nbsp;&nbsp;members jsonb default '[]',<br>
+&nbsp;&nbsp;route text not null,<br>
+&nbsp;&nbsp;points integer default 0,<br>
+&nbsp;&nbsp;completed_stations jsonb default '[]',<br>
+&nbsp;&nbsp;tasks jsonb default '{}',<br>
+&nbsp;&nbsp;registered_at bigint<br>
+);<br><br>
+create table submissions (<br>
+&nbsp;&nbsp;id bigint primary key,<br>
+&nbsp;&nbsp;team_code text not null,<br>
+&nbsp;&nbsp;station_id text not null,<br>
+&nbsp;&nbsp;type text not null,<br>
+&nbsp;&nbsp;submitted_at bigint,<br>
+&nbsp;&nbsp;status text default 'approved',<br>
+&nbsp;&nbsp;points integer default 0,<br>
+&nbsp;&nbsp;note text default ''<br>
+);<br><br>
+alter table teams enable row level security;<br>
+alter table submissions enable row level security;<br><br>
+create policy "open" on teams for all using (true) with check (true);<br>
+create policy "open" on submissions for all using (true) with check (true);
+    </div>
+  </div>
+
+  <div class="setup-step">
+    <div class="setup-num">4</div>
+    <div class="setup-title">API Keys holen</div>
+    <p class="small cm">Project Settings → API → Project URL + anon public key kopieren.</p>
+  </div>
+
+  <div class="setup-step card-y" style="border-color:var(--y)">
+    <div class="setup-num" style="color:var(--y)">5</div>
+    <div class="setup-title">Hier eintragen</div>
+    <div class="fgroup">
+      <label class="flabel">Project URL</label>
+      <input class="finput" id="setup-url" placeholder="https://xxxxxxxxxxxx.supabase.co">
+    </div>
+    <div class="fgroup">
+      <label class="flabel">Anon Public Key</label>
+      <input class="finput" id="setup-key" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...">
+    </div>
+    <div id="setup-err" class="alert al-err" style="display:none"></div>
+    <button class="btn btn-y btn-block" onclick="saveSupabaseConfig()">🚀 VERBINDEN & LOSLEGEN</button>
+  </div>
+</div>
+
+<!-- HOME -->
+<div id="page-home" class="page">
+  <div class="hero">
+    <div class="hero-eye">🎂 Birthday Edition</div>
+    <div class="hero-title">FINN'S TOUR<br>DE TRINKHALLE</div>
+    <div class="hero-sub">Düsseldorf City Kiosk Challenge</div>
+    <div class="flex gap1 wrap" style="justify-content:center;margin-bottom:1.4rem;">
+      <span class="ptag ptag-y">🏪 8 STATIONEN</span>
+      <span class="ptag ptag-p">5 GEMEINSAM</span>
+      <span class="ptag" style="background:var(--b);color:var(--d0);">3 EXKLUSIV</span>
+      <span class="ptag" style="background:var(--o);color:#fff;">3 ROUTEN</span>
+    </div>
+    <div class="flex gap1 wrap" style="justify-content:center;">
+      <button class="btn btn-y" onclick="nav('register')">TEAM ANMELDEN</button>
+      <button class="btn btn-out" onclick="nav('leaderboard')">RANGLISTE</button>
+    </div>
+  </div>
+
+  <div class="igrid">
+    <div class="ibox"><div class="ival cy" id="st-teams">–</div><div class="ilabel">Teams</div></div>
+    <div class="ibox"><div class="ival cg" id="st-players">–</div><div class="ilabel">Spieler</div></div>
+    <div class="ibox"><div class="ival cp" id="st-subs">–</div><div class="ilabel">Abgehakt</div></div>
+    <div class="ibox"><div class="ival cb" id="st-done">–</div><div class="ilabel">Stationen ✅</div></div>
+  </div>
+
+  <div class="card card-y">
+    <div class="stitle">🗺️ ROUTEN-SYSTEM</div>
+    <div class="g2">
+      <div style="background:var(--d2);padding:.8rem;border-left:3px solid var(--o);border-radius:3px;">
+        <div style="font-family:'Bebas Neue';font-size:.9rem;color:var(--o);">🏪 GEMEINSAME STATIONEN</div>
+        <div class="tiny mt1">Positionen 1, 3, 5, 7, 8 – hier trefft ihr alle anderen Teams!</div>
+      </div>
+      <div style="background:var(--d2);padding:.8rem;border-left:3px solid var(--b);border-radius:3px;">
+        <div style="font-family:'Bebas Neue';font-size:.9rem;color:var(--b);">🎯 EXKLUSIVE STATIONEN</div>
+        <div class="tiny mt1">Positionen 2, 4, 6 – nur eure Route kennt diese Kioske!</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LEAFLET ROUTE MAP -->
+  <div class="card" style="padding:.8rem">
+    <div style="font-family:'Bebas Neue';font-size:1rem;color:var(--y);letter-spacing:2px;margin-bottom:.5rem">&#x1F5FA;&#xFE0F; ROUTE-ÜBERSICHT</div>
+    <div id="home-map" style="height:260px;border-radius:6px;overflow:hidden;position:relative;z-index:0"></div>
+    <div class="tiny mt1 cm" style="text-align:center">
+      <span style="color:#FF6B35">━━</span> Route A &nbsp;
+      <span style="color:#00D4FF">━━</span> Route B &nbsp;
+      <span style="color:#39FF14">━━</span> Route C &nbsp;&nbsp;
+      <span style="color:#FF7A00">●</span> Meetup &nbsp;
+      <span style="color:#FF7A00">○</span> Exklusiv
+    </div>
+  </div>
+
+  <div class="card card-p">
+    <div class="stitle">🏆 Siegerehrung</div>
+    <div class="prize-box">
+      <div style="font-family:'Bebas Neue';font-size:1.5rem;color:var(--y);">WIRD VOR ORT ENTHÜLLT</div>
+      <div class="cm small mt1">Der Gamemaster leitet die Zeremonie</div>
+    </div>
+  </div>
+</div>
+
+<!-- REGISTER -->
+<div id="page-register" class="page">
+  <div class="stitle">📋 TEAM ANMELDEN</div>
+  <div class="tabrow">
+    <button class="tabbtn active" onclick="regTab('new')" id="rt-new">NEUES TEAM</button>
+    <button class="tabbtn" onclick="regTab('lookup')" id="rt-look">CODE EINGEBEN</button>
+  </div>
+
+  <div id="reg-new-wrap">
+    <div class="card">
+      <div class="fgroup">
+        <label class="flabel">Teamname</label>
+        <input class="finput" id="reg-name" placeholder="z.B. Die Späti-Krieger" maxlength="30">
+      </div>
+      <label class="flabel">Mitglieder (3–5)</label>
+      <div id="mem-list">
+        <div class="member-row"><input class="finput" placeholder="Name 1"></div>
+        <div class="member-row"><input class="finput" placeholder="Name 2"></div>
+        <div class="member-row"><input class="finput" placeholder="Name 3"></div>
+      </div>
+      <button class="btn btn-out btn-sm mt1" id="add-mem-btn" onclick="addMember()">+ MITGLIED</button>
+      <div class="div"></div>
+      <div id="reg-err" class="alert al-err" style="display:none"></div>
+      <button class="btn btn-y btn-block" onclick="registerTeam()" id="reg-btn">🚀 REGISTRIEREN</button>
+    </div>
+  </div>
+
+  <div id="reg-success" style="display:none;">
+    <div class="card card-g">
+      <div class="stitle cg">✅ REGISTRIERT!</div>
+      <div class="codebox">
+        <div class="tiny mb1">EUER TEAM-CODE – nicht vergessen!</div>
+        <div class="code-big" id="suc-code">----</div>
+        <div class="tiny mt1">Damit loggt ihr euch bei "Mein Team" ein</div>
+      </div>
+      <div id="suc-route" class="alert al-info mt2"></div>
+      <div id="suc-start" class="alert al-ok"></div>
+      <button class="btn btn-y btn-block mt1" onclick="gotoMyTeam()">AUFGABEN SEHEN →</button>
+    </div>
+  </div>
+
+  <div id="reg-lookup-wrap" style="display:none;">
+    <div class="card">
+      <div class="fgroup">
+        <label class="flabel">Team-Code</label>
+        <input class="finput" id="look-code" placeholder="z.B. TK4F" maxlength="6" style="font-family:'Bebas Neue';font-size:2rem;letter-spacing:8px;text-transform:uppercase">
+      </div>
+      <button class="btn btn-y btn-block" onclick="lookupTeam()">SUCHEN</button>
+      <div id="look-result" class="mt2"></div>
+    </div>
+  </div>
+</div>
+
+<!-- MEIN TEAM -->
+<div id="page-meinteam" class="page">
+  <div class="stitle">🏪 MEIN TEAM</div>
+  <div id="mt-nocode">
+    <div class="card">
+      <p class="small cm mb2">Team-Code eingeben um Aufgaben zu sehen.</p>
+      <div class="fgroup">
+        <input class="finput" id="mt-codein" placeholder="TEAM-CODE" style="font-family:'Bebas Neue';font-size:2rem;letter-spacing:8px;text-transform:uppercase">
+      </div>
+      <button class="btn btn-y btn-block" onclick="loadTeam()">LADEN</button>
+    </div>
+  </div>
+  <div id="mt-content"></div>
+</div>
+
+<!-- LEADERBOARD -->
+<div id="page-leaderboard" class="page">
+  <div class="flex jb aic mb2 wrap gap1">
+    <div class="stitle" style="margin:0">🏆 RANGLISTE</div>
+    <div class="flex aic gap1">
+      <div class="tiny cm">🔴 LIVE</div>
+      <button class="btn btn-out btn-sm" onclick="renderLB()">↺</button>
+    </div>
+  </div>
+  <div id="lb-list"></div>
+  <p id="lb-empty" class="cm" style="text-align:center;padding:3rem;display:none">Noch keine Teams...</p>
+</div>
+
+<!-- RULES -->
+<div id="page-rules" class="page">
+  <div class="stitle">📖 REGELN</div>
+  <div class="card card-y">
+    <div style="font-family:'Bebas Neue';color:var(--y);letter-spacing:2px;margin-bottom:.6rem">🎯 ABLAUF</div>
+    <p class="small">Jedes Team läuft <strong>8 Kiosk-Stationen</strong> ab – 5 Stationen teilen sich alle Teams, 3 sind exklusiv für eure Route. Aufgaben am Kiosk freischalten, Beweis per WhatsApp an den GM (Finn), dann in der App abhaken!</p>
+  </div>
+  <div class="card" style="border-left:3px solid #FFB300">
+    <div style="font-family:'Bebas Neue';color:#FFB300;letter-spacing:2px;margin-bottom:.6rem">🍺 AN JEDER STATION</div>
+    <p class="small">Ihr trinkt an jeder Station ein Bier –<strong>0,33L oder 0,5L</strong> oder eine Alternative für die Nichttrinker </p>
+  </div>
+  <div class="card">
+    <div style="font-family:'Bebas Neue';color:var(--y);letter-spacing:2px;margin-bottom:.6rem">📸 PUNKTE</div>
+    <div class="small" style="line-height:2.2">
+      ✅ <strong>Team-Aufgabe</strong> → <span class="cg">10 Punkte</span><br>
+      🎲 <strong>Wildcard</strong> → <span class="cg">5 Punkte</span><br>
+      ✅ <strong>Beide</strong> → <span class="cg">15 Punkte</span><br>
+      ⚡ <strong>Speed-Bonus (erstes fertiges Team)</strong> → <span class="cg">+15 Punkte</span>
+    </div>
+  </div>
+  <div class="card card-y">
+    <div style="font-family:'Bebas Neue';color:var(--y);letter-spacing:2px;margin-bottom:.6rem">🗺️ STARTZEIT</div>
+    <div class="small">⏰ Alle Gruppen starten um <strong id="rules-start-time">18:00 Uhr</strong> – Heyestraße 1, Gerresheim</div>
+  </div>
+  <div class="card">
+    <div style="font-family:'Bebas Neue';color:var(--o);letter-spacing:2px;margin-bottom:.6rem">📍 ROUTEN</div>
+    <p class="small cm">5 gemeinsame Treffpunkte (Pos. 1, 3, 5, 7, 8) + je 3 exklusive Kioske pro Route (Pos. 2, 4, 6). Aufgaben sind immer individuell zufällig – nicht beim Nachbarteam abschauen!</p>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div id="page-admin" class="page">
+  <div class="stitle">🔐 GAMEMASTER</div>
+  <div id="adm-login">
+    <div class="card card-p">
+      <div class="fgroup">
+        <label class="flabel">Passwort</label>
+        <input type="password" class="finput" id="adm-pw" placeholder="••••••••" onkeydown="if(event.key==='Enter')adminLogin()">
+      </div>
+      <div id="adm-pw-err" class="alert al-err" style="display:none">Falsches Passwort!</div>
+      <button class="btn btn-p btn-block" onclick="adminLogin()">EINLOGGEN</button>
+      <div class="tiny mt2">Standard: <strong>finn2026</strong></div>
+    </div>
+  </div>
+
+  <div id="adm-panel" style="display:none;">
+    <div class="tabrow">
+      <button class="tabbtn active" onclick="admTab('subs')" id="at-subs">BEWEISE</button>
+      <button class="tabbtn" onclick="admTab('teams')" id="at-teams">TEAMS</button>
+      <button class="tabbtn" onclick="admTab('pool')" id="at-pool">AUFGABEN</button>
+      <button class="tabbtn" onclick="admTab('settings')" id="at-settings">EINSTELLUNGEN</button>
+    </div>
+
+    <div id="adm-subs">
+      <div class="flex jb aic wrap gap1 mb2">
+        <span class="cm tiny" id="adm-sub-count"></span>
+        <button class="btn btn-out btn-sm" onclick="renderAdmSubs()">↺ REFRESH</button>
+      </div>
+      <div id="adm-subs-list"></div>
+      <p id="adm-subs-empty" class="cm" style="text-align:center;padding:2rem;display:none">Keine Einreichungen.</p>
+    </div>
+
+    <div id="adm-teams" style="display:none;">
+      <div id="adm-teams-list"></div>
+    </div>
+
+    <div id="adm-pool" style="display:none;">
+      <div class="alert al-info mb2">✏️ Aufgaben bearbeiten. Nach Änderungen <strong>Speichern</strong>!</div>
+      <div id="pool-editor"></div>
+      <button class="btn btn-y btn-block mt2" onclick="savePool()">💾 SPEICHERN</button>
+      <div id="pool-save-msg" class="alert al-ok mt1" style="display:none">✅ Gespeichert!</div>
+    </div>
+
+    <div id="adm-settings" style="display:none;">
+      <div class="card card-y">
+        <div style="font-family:'Bebas Neue';color:var(--y);letter-spacing:2px;margin-bottom:.7rem">⏰ STARTZEIT</div>
+        <p class="tiny cm mb2">Gilt für alle 3 Routen gleichzeitig.</p>
+        <div class="fgroup">
+          <input class="finput" id="start-time-input" type="time" value="18:00" style="font-size:1.4rem;font-family:'Bebas Neue';letter-spacing:4px">
+        </div>
+        <button class="btn btn-y btn-block" onclick="saveStartTime()">💾 SPEICHERN</button>
+        <div id="st-save-msg" class="alert al-ok mt1" style="display:none">✅ Startzeit gespeichert!</div>
+      </div>
+        <div style="font-family:'Bebas Neue';color:#25D366;letter-spacing:2px;margin-bottom:.7rem">📱 WHATSAPP NUMMER</div>
+        <p class="tiny cm mb2">Format ohne + oder 0: z.B. <code>4917612345678</code></p>
+        <div class="fgroup">
+          <input class="finput" id="wa-num-input" placeholder="4917612345678" style="letter-spacing:2px">
+        </div>
+        <button class="btn btn-sm btn-block" style="background:#25D366;color:#fff" onclick="saveWaNum()">💾 SPEICHERN</button>
+        <div id="wa-save-msg" class="alert al-ok mt1" style="display:none">✅ Gespeichert!</div>
+      </div>
+      <div class="card mt2">
+        <div class="fgroup">
+          <label class="flabel">Neues GM-Passwort</label>
+          <input type="password" class="finput" id="new-pw" placeholder="Neues Passwort">
+        </div>
+        <button class="btn btn-p btn-sm" onclick="changePw()">SPEICHERN</button>
+      </div>
+      <div class="card mt2">
+        <div style="font-family:'Bebas Neue';color:var(--p);letter-spacing:2px;margin-bottom:.7rem">⚠️ SUPABASE NEU KONFIGURIEREN</div>
+        <button class="btn btn-out btn-sm" style="border-color:var(--p);color:var(--p)" onclick="clearConfig()">SUPABASE CONFIG LÖSCHEN</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="bn-btn active" onclick="nav('home')" id="nav-home"><span class="bn-icon">🏠</span>HOME</button>
+  <button class="bn-btn" onclick="nav('register')" id="nav-register"><span class="bn-icon">📋</span>ANMELDEN</button>
+  <button class="bn-btn" onclick="nav('meinteam')" id="nav-meinteam"><span class="bn-icon">🏪</span>MEIN TEAM</button>
+  <button class="bn-btn" onclick="nav('leaderboard')" id="nav-leaderboard"><span class="bn-icon">🏆</span>PUNKTE</button>
+  <button class="bn-btn" onclick="nav('rules')" id="nav-rules"><span class="bn-icon">📖</span>REGELN</button>
+  <button class="bn-btn" onclick="nav('admin')" id="nav-admin"><span class="bn-icon">🔐</span>GM</button>
+</div>
+
+<!-- STATION MODAL -->
+<div class="modal-ov" id="st-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="flex jb aic mb2">
+      <div style="font-family:'Bebas Neue';font-size:1.2rem;color:var(--y)" id="modal-title">STATION</div>
+      <button onclick="closeModal()" style="background:none;border:none;color:var(--m);cursor:pointer;font-size:1.2rem;min-width:44px;min-height:44px;">✕</button>
+    </div>
+    <div id="modal-body"></div>
+
+    <div id="modal-beer" style="display:none;background:#1a1200;border:1px solid #FFB30077;border-radius:5px;padding:.7rem 1rem;margin:.8rem 0;font-size:.85rem;">
+      🍺 <strong style="color:#FFB300">Bier-Pflicht:</strong> Alle trinken hier ein Bier – mindestens 0,33L oder 0,5L pro Person!
+    </div>
+
+    <div id="modal-actions" style="display:none;">
+      <div style="background:var(--d2);border:1px solid #25D366;border-radius:5px;padding:.9rem;margin-top:1rem;">
+        <div style="font-family:'Bebas Neue';color:#25D366;font-size:.9rem;letter-spacing:2px;margin-bottom:.4rem">📱 SCHRITT 1 – BEWEIS AN FINN</div>
+        <p class="tiny cm mb2">Foto/Video per WhatsApp schicken:</p>
+        <a id="wa-link" href="#" target="_blank" rel="noopener" class="btn btn-wa btn-block" style="font-size:.95rem;letter-spacing:2px;">📲 WHATSAPP ÖFFNEN</a>
+        <div class="tiny mt1 cm" id="wa-hint"></div>
+      </div>
+      <div style="margin-top:1rem">
+        <div style="font-family:'Bebas Neue';color:var(--y);font-size:.9rem;letter-spacing:2px;margin-bottom:.6rem">SCHRITT 2 – AUFGABE ABHAKEN</div>
+        <div class="fgroup">
+          <label class="flabel">Was habt ihr erledigt?</label>
+          <select class="fselect" id="sub-type">
+            <option value="team">🏆 Team-Aufgabe (+10 Pkt)</option>
+            <option value="wildcard">🎲 Wildcard (+5 Pkt)</option>
+            <option value="both">✅ Beide (+15 Pkt)</option>
+          </select>
+        </div>
+        <button class="btn btn-y btn-block" onclick="submitEvidence()" style="font-size:1.1rem">✅ AUFGABE ERLEDIGT!</button>
+        <div class="tiny cm mt1" style="text-align:center">Punkte kommen sofort</div>
+      </div>
+    </div>
+
+    <div id="modal-done" style="display:none;margin-top:1rem">
+      <div class="alert al-ok" style="text-align:center">✅ Aufgabe abgehakt! 🎉</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// TASK POOL
+// ============================================================
+const DEFAULT_POOL = {
+  teamTasks: [
+    "Singt dem Kioskbesitzer gemeinsam 'Happy Birthday' – Finn braucht Serenaden! (Video)",
+    "Alle springen gleichzeitig vor dem Kiosk – perfekter Sprungmoment! (Foto)",
+    "Das Team baut eine Menschenkette vor dem Kiosk und posiert! (Foto)",
+    "Kauft das absurdeste Produkt im Kiosk – alle halten es hoch! (Foto)",
+    "Einer hält ein Bier mit dem Mund – kein Einsatz der Hände! (Video)",
+    "Das Team tanzt 10 Sekunden vor dem Kiosk. Der Kioskbesitzer muss lachen. (Video)",
+    "Findet jemanden mit demselben Vornamen wie Finn – Foto zusammen! (Foto)",
+    "Alle springen wie Boyband-Albumcover – jeder hat seine eigene Pose! (Foto)",
+    "Alle trinken zeitgleich – Countdown von 3, dann Prost auf Finn! (Video mit Ton)",
+    "Das Team baut eine Pyramide aus Leergut – so hoch wie möglich! (Foto)",
+    "Jeder wählt ein Produkt blind aus dem Kiosk – alle zeigen gleichzeitig! (Foto)",
+    "Alle bilden einen Kreis – wer zuletzt den Namen eines Teammitglieds ruft bestellt die nächste Runde. (Video)",
+    "Das ganze Team macht ein Spiegelfoto im nächsten Schaufenster – alle müssen drauf. (Foto)",
+    "Verhandelt mit dem Kioskbesitzer um 10 Cent Rabatt – Ergebnis festhalten. (Video)",
+    "FINALE: Das Team filmt sich beim Ruf 'Alles Gute Finn!' – laut, kreativ, mit Energie! (Video)",
+    "FINALE: Jeder schreibt 'Happy Birthday Finn' auf einen Bierdeckel – Foto mit allen Deckeln! (Foto)",
+    "FINALE: Das Team formiert sich zu den Buchstaben F-I-N-N – Foto von oben! (Foto)",
+    "Baut eine menschliche Pyramide – alle Teammitglieder! (Foto)",
+    "Einer balanciert das Sixpack auf dem Kopf – 10 Schritte ohne abzusetzen. (Video)",
+    "Team-Battle: Wer kann am längsten auf einem Bein stehen? Wettbewerb filmen! (Video)",
+    "Alle bestellen dasselbe Getränk gleichzeitig ohne vorher abzusprechen. (Video)",
+    "Wer kann am schnellsten eine Dose Bier öffnen? Wettbewerb filmen! (Video)",
+    "Alle machen gleichzeitig eine tiefe Kniebeuge vor dem Kiosk. (Foto in tiefster Position)",
+    "Wer kauft das seltsamste Produkt? Alle abstimmen – Gewinner zeigt Beweis. (Foto)",
+    "Das Team erfindet spontan einen Teamruf und führt ihn vor dem Kiosk auf. (Video)",
+    "Alle posieren als wäre es ein professionelles Werbe-Shooting für Bier. (Foto)",
+    "Das Team singt den Eröffnungsjingle der Tour – frei erfunden, mind. 15 Sek. (Video)",
+    "Einer trägt alle anderen Getränke gleichzeitig – kein Trolley erlaubt! (Foto)",
+    "Das Team posiert als Statuen – niemand darf sich 10 Sek. bewegen. Passant bestätigt. (Video)",
+    "Wer trinkt sein Bier am schnellsten? Kein Verschütten erlaubt! (Video)"
+  ],
+  wildcards: [
+    "Bestell beim Kiosk etwas auf Englisch und bleib dabei komplett ernst.",
+    "Überzeuge einen Fremden euer Team-Foto zu machen.",
+    "Erkläre dem Kioskbesitzer in einem Satz warum euer Team gewinnt.",
+    "Erzähl dem Kioskbesitzer einen Witz – er muss zumindest schmunzeln.",
+    "Bestell die günstigste Sache und bedank dich übertrieben höflich.",
+    "Mach ein Selfie mit jemandem der zufällig die Teamfarbe trägt.",
+    "Sing 10 Sekunden ein Lied a cappella – ohne Instrument und ohne Scham.",
+    "Überzeuge jemanden 'Finn ist der Beste' zu sagen und Daumen hoch zu halten.",
+    "Mach ein Foto mit einem Hund. Kein Hund? Finde einen.",
+    "Erzähl einem Passanten dass ihr eine Weltreise zu Fuß macht. Reaktion festhalten.",
+    "Verabschiede dich vom Kioskbesitzer auf Japanisch mit tiefer Verbeugung.",
+    "Finde jemanden der dasselbe Geburtsjahr hat wie Finn.",
+    "Lass dir von einem fremden Passanten einen Tipp für die Altstadt geben.",
+    "Überzeuge jemanden auf der Straße euren Teamjubel mitzumachen.",
+    "Finde jemanden der dasselbe Getränk in der Hand hält wie du gerade.",
+    "Bestell beim Kiosk die nächste Runde auf Spanisch.",
+    "Singe dem Kioskbesitzer auf Knien ein Lied vor.",
+    "Selfie mit dem ganzen Team plus mindestens 2 Fremden.",
+    "Kauf etwas für genau 1,00€ – auf den Cent genau!",
+    "Lass dir von einem Fremden ein ehrliches Kompliment geben.",
+    "Sing dem nächsten Passanten 'Happy Birthday' – er heißt nicht Finn.",
+    "Überzeuge einen Fremden 'Prost' auf Finnisch zu sagen ('Kippis!').",
+    "Finde jemanden der ein kariertes Hemd trägt.",
+    "Lass dir von einem Fremden sein Lieblingsrezept erzählen.",
+    "Finde jemanden der dieselbe Schuhgröße hat wie du.",
+    "Überzeuge einen Passanten euren Weg zur Altstadt auf Englisch zu beschreiben.",
+    "Finde jemanden der denselben Vornamen hat wie ein Teammitglied.",
+    "Lass dir vom Kioskbesitzer einen Trinkspruch beibringen.",
+    "Finde auf der Straße jemanden der älter als 60 ist und mach ein Foto mit ihm.",
+    "Erkläre dem Kioskbesitzer in 30 Sek. was Finn's Tour de Trinkhalle ist."
+  ]
+}
+// Station name lookup (global)
+const STATION_NAMES={s1:'Heyestraße 1',s3:'Lichtstraße 28',s5:'Dorotheenstraße 15',s7:'Ostraße 1–3',s8:'Bolkerstraße 54',a2:'Heyestraße 148',a4:'Lichtstraße 77',a6:'Louise-Dumont-Str.',b2:'Dreherstraße 3',b4:'Flurstraße 41',b6:'Tußmannstraße 12',c2:'Kölner Tor 25',c4:'Langersstraße 59',c6:'Altestadt 9'};
+
+// ── Routen & Zeiten ───────────────────────────────────────────
+const ROUTE_ORDER = {
+  A: ['s1','a2','s3','a4','s5','a6','s7','s8'],
+  B: ['s1','b2','s3','b4','s5','b6','s7','s8'],
+  C: ['s1','c2','s3','c4','s5','c6','s7','s8']
+};
+// Startzeit wird aus Supabase geladen
+let _startTime = '18:00';
+function getStartTime(){ return _startTime + ' Uhr'; }
+
+// ============================================================
+// STATE
+// ============================================================
+let sb = null;
+let currentCode = null;
+let currentModal = null;
+let memberCount = 3;
+let teamCache = {};
+
+// ============================================================
+// SUPABASE INIT
+// ============================================================
+function getSavedConfig(){
+  return {
+    url: localStorage.getItem('sb_url') || 'https://tlraftrdmjcxixuvxobf.supabase.co',
+    key: localStorage.getItem('sb_key') || 'sb_publishable_dc_wQuVcgjm_-bUyg6G5Ng_iwdTUJ1I'
+  };
+}
+
+async function initSupabase(url, key){
+  const {createClient} = window.supabase;
+  sb = createClient(url, key);
+  const {error} = await sb.from('teams').select('id').limit(1);
+  if(error) throw error;
+}
+
+async function saveSupabaseConfig(){
+  const url = document.getElementById('setup-url').value.trim();
+  const key = document.getElementById('setup-key').value.trim();
+  const errEl = document.getElementById('setup-err');
+  errEl.style.display='none';
+  if(!url||!key){errEl.textContent='Bitte beide Felder ausfüllen!';errEl.style.display='block';return;}
+  showLoading('Verbinde mit Supabase...');
+  try{
+    await initSupabase(url,key);
+    localStorage.setItem('sb_url',url);
+    localStorage.setItem('sb_key',key);
+    hideLoading();
+    setConnected(true);
+    showApp();
+    subscribeRealtime();
+  }catch(e){
+    hideLoading();
+    errEl.textContent='Verbindung fehlgeschlagen: '+e.message;
+    errEl.style.display='block';
+  }
+}
+
+function clearConfig(){
+  if(confirm('Supabase Config löschen und neu einrichten?')){
+    localStorage.removeItem('sb_url');
+    localStorage.removeItem('sb_key');
+    location.reload();
+  }
+}
+
+// ============================================================
+// REALTIME
+// ============================================================
+function subscribeRealtime(){
+  sb.channel('live')
+    .on('postgres_changes',{event:'*',schema:'public',table:'teams'},()=>{
+      if(document.getElementById('page-leaderboard').classList.contains('active'))renderLB();
+      updateStats();
+      if(currentCode&&document.getElementById('page-meinteam').classList.contains('active'))loadTeamByCode(currentCode);
+    })
+    .on('postgres_changes',{event:'*',schema:'public',table:'submissions'},()=>{
+      updateStats();
+    })
+    .subscribe(status=>{setConnected(status==='SUBSCRIBED');});
+}
+
+function setConnected(ok){
+  const dot=document.getElementById('conn-dot');
+  const lbl=document.getElementById('conn-label');
+  dot.className='conn-dot'+(ok?' online':' error');
+  lbl.textContent=ok?'Live':'Offline';
+}
+
+// ============================================================
+// LOADING
+// ============================================================
+function showLoading(txt='Laden...'){
+  document.getElementById('loading-text').textContent=txt;
+  document.getElementById('loading').classList.add('show');
+}
+function hideLoading(){document.getElementById('loading').classList.remove('show');}
+
+// ============================================================
+// APP / SETUP
+// ============================================================
+function showApp(){
+  document.getElementById('page-setup').classList.remove('active');
+  document.getElementById('page-home').classList.add('active');
+  document.getElementById('nav-home').classList.add('active');
+  document.querySelector('.bottom-nav').style.display='flex';
+  updateStats();
+}
+
+function showSetup(){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-setup').classList.add('active');
+  document.querySelector('.bottom-nav').style.display='none';
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function nav(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.bn-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  const nb=document.getElementById('nav-'+id);
+  if(nb)nb.classList.add('active');
+  window.scrollTo(0,0);
+  if(id==='leaderboard')renderLB();
+  if(id==='rules'){var el=document.getElementById('rules-start-time');if(el)el.textContent=getStartTime();}
+  if(id==='home'){updateStats();setTimeout(initHomeMap,100);}
+  if(id==='meinteam'&&currentCode)loadTeamByCode(currentCode);
+  if(id==='admin'&&document.getElementById('adm-panel').style.display!=='none'){renderAdmSubs();renderAdmTeams();}
+}
+
+function regTab(t){
+  document.getElementById('reg-new-wrap').style.display=t==='new'?'block':'none';
+  document.getElementById('reg-success').style.display='none';
+  document.getElementById('reg-lookup-wrap').style.display=t==='lookup'?'block':'none';
+  document.getElementById('rt-new').classList.toggle('active',t==='new');
+  document.getElementById('rt-look').classList.toggle('active',t==='lookup');
+}
+
+function admTab(t){
+  ['subs','teams','pool','settings'].forEach(x=>{
+    document.getElementById('adm-'+x).style.display=x===t?'block':'none';
+    document.getElementById('at-'+x).classList.toggle('active',x===t);
+  });
+  if(t==='subs')renderAdmSubs();
+  if(t==='teams')renderAdmTeams();
+  if(t==='pool')renderPoolEditor();
+  if(t==='settings'){
+    const i=document.getElementById('wa-num-input');if(i)i.value=getWaNum();
+    const s=document.getElementById('start-time-input');if(s)s.value=_startTime;
+  }
+}
+
+// ============================================================
+// LOCAL HELPERS
+// ============================================================
+// Pool wird aus Supabase geladen und gecacht
+let _pool = null;
+function getPool(){ return _pool || DEFAULT_POOL; }
+
+async function loadPool(){
+  try{
+    const {data} = await sb.from('settings').select('value').eq('key','task_pool').single();
+    if(data){
+      const parsed = JSON.parse(data.value);
+      // Migration check: neues Format hat teamTasks Array
+      if(parsed && Array.isArray(parsed.teamTasks)){
+        _pool = parsed;
+      } else {
+        // Altes Stations-Format -> DEFAULT_POOL nehmen und gleich neu speichern
+        _pool = JSON.parse(JSON.stringify(DEFAULT_POOL));
+        await sb.from('settings').upsert({key:'task_pool', value:JSON.stringify(_pool)});
       }
-    })
+    } else {
+      _pool = JSON.parse(JSON.stringify(DEFAULT_POOL));
+    }
+  }catch(e){ _pool = JSON.parse(JSON.stringify(DEFAULT_POOL)); }
+}
+function getWaNum(){return localStorage.getItem('ft_wa')||'';}
+function pickRandom(arr){return arr&&arr.length?arr[Math.floor(Math.random()*arr.length)]:'Aufgabe folgt...';}
+
+// GM-Passwort kommt aus Supabase (settings-Tabelle), nicht aus localStorage
+let _gmPw = 'finn2026'; // Fallback bis Supabase geladen hat
+
+async function loadGmPassword(){
+  try{
+    const {data} = await sb.from('settings').select('value').eq('key','gm_password').single();
+    if(data) _gmPw = data.value;
+  }catch(e){ console.warn('GM-Passwort konnte nicht geladen werden, nutze Fallback.'); }
+}
+
+async function loadStartTime(){
+  try{
+    const {data} = await sb.from('settings').select('value').eq('key','start_time').single();
+    if(data) _startTime = data.value;
+  }catch(e){ /* Fallback 18:00 */ }
+}
+
+function getPW(){ return _gmPw; }
+
+// BUG FIX 2: Cache helpers properly used
+function getLocalTeamCache(code){ return teamCache[code]||null; }
+function setLocalTeamCache(team){ if(team) teamCache[team.code]=team; }
+
+// Aufgaben werden NICHT mehr bei Registrierung gezogen
+// Stattdessen: bei "Aufgabe freischalten" am Kiosk aus globalem Pool
+
+function drawTasksForStation(sid){
+  const pool = getPool();
+  const tasks = Array.isArray(pool.teamTasks)?pool.teamTasks:[];
+  const wilds = Array.isArray(pool.wildcards)?pool.wildcards:[];
+  // 2 verschiedene Team-Aufgaben
+  const shuffled = [...tasks].sort(()=>Math.random()-0.5);
+  const t1 = shuffled[0] || 'Aufgabe folgt...';
+  const t2 = shuffled[1] || t1;
+  const wildcard = wilds[Math.floor(Math.random()*wilds.length)] || 'Wildcard folgt...';
+  return { teamTask1:t1, teamTask2:t2, wildcard, chosenTask:null };
+}
+
+// ============================================================
+// REGISTRATION
+// ============================================================
+function addMember(){
+  if(memberCount>=5)return;
+  memberCount++;
+  const li=document.getElementById('mem-list');
+  const r=document.createElement('div');r.className='member-row';
+  r.innerHTML=`<input class="finput" placeholder="Name ${memberCount}"><button class="rm-btn" onclick="this.parentElement.remove();memberCount--">✕</button>`;
+  li.appendChild(r);
+  if(memberCount>=5)document.getElementById('add-mem-btn').style.display='none';
+}
+
+function genCode(){
+  const c='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s='';for(let i=0;i<4;i++)s+=c[Math.floor(Math.random()*c.length)];
+  return s;
+}
+
+// BUG FIX 1: Nur Route A und B – kein C oder D mehr
+async function assignRoute(){
+  const {data} = await sb.from('teams').select('route');
+  const counts={A:0, B:0, C:0};
+  (data||[]).forEach(t=>{ if(counts[t.route]!==undefined) counts[t.route]++; });
+  // Wählt die Route mit den wenigsten Teams (bei Gleichstand: A > B > C)
+  return Object.keys(counts).reduce((a,b)=>counts[a]<=counts[b]?a:b);
+}
+
+async function registerTeam(){
+  const name=document.getElementById('reg-name').value.trim();
+  const members=Array.from(document.querySelectorAll('#mem-list input')).map(i=>i.value.trim()).filter(Boolean);
+  const errEl=document.getElementById('reg-err');
+  errEl.style.display='none';
+  if(!name){errEl.textContent='Bitte Teamnamen eingeben!';errEl.style.display='block';return;}
+  if(members.length<3){errEl.textContent='Mindestens 3 Mitglieder! Maximal 5';errEl.style.display='block';return;}
+
+  const btn=document.getElementById('reg-btn');
+  btn.disabled=true;
+  showLoading('Registriere Team...');
+
+  try{
+    const {data:existing} = await sb.from('teams').select('code').ilike('name',name).limit(1);
+    if(existing&&existing.length){
+      errEl.textContent='Name bereits vergeben!';errEl.style.display='block';
+      btn.disabled=false;hideLoading();return;
+    }
+
+    let code=genCode();
+    let tries=0;
+    while(tries<10){
+      const {data:c}=await sb.from('teams').select('code').eq('code',code).limit(1);
+      if(!c||!c.length)break;
+      code=genCode();tries++;
+    }
+
+    const route=await assignRoute();
+    const team={code,name,members,route,points:0,completed_stations:[],tasks:{},registered_at:Date.now()};
+    const {error} = await sb.from('teams').insert(team);
+    if(error)throw error;
+
+    currentCode=code;
+    setLocalTeamCache(team); // BUG FIX 2: Cache direkt beim Registrieren setzen
+    document.getElementById('suc-code').textContent=code;
+    document.getElementById('suc-route').innerHTML=`📍 <strong>Route ${route}</strong> – ${ROUTE_ORDER[route].length} Stationen`;
+    document.getElementById('suc-start').innerHTML=`⏰ Startzeit: <strong>${getStartTime()}</strong> — Heyestraße 1, Gerresheim`;
+    document.getElementById('reg-new-wrap').style.display='none';
+    document.getElementById('reg-success').style.display='block';
+    updateStats();
+  }catch(e){
+    errEl.textContent='Fehler: '+e.message;errEl.style.display='block';
+  }finally{
+    btn.disabled=false;hideLoading();
+  }
+}
+
+async function lookupTeam(){
+  const code=document.getElementById('look-code').value.trim().toUpperCase();
+  const el=document.getElementById('look-result');
+  showLoading('Suche Team...');
+  try{
+    const {data:t} = await sb.from('teams').select('*').eq('code',code).single();
+    hideLoading();
+    if(!t){el.innerHTML='<div class="alert al-err">Team nicht gefunden!</div>';return;}
+    setLocalTeamCache(t); // BUG FIX 2: Cache bei Lookup befüllen
+    el.innerHTML=`<div class="alert al-ok">✅ <strong>${t.name}</strong> – Route ${t.route}</div>
+      <button class="btn btn-y btn-block mt1" onclick="currentCode='${t.code}';gotoMyTeam()">ZU MEINER TEAM-SEITE →</button>`;
+  }catch(e){hideLoading();el.innerHTML='<div class="alert al-err">Fehler: '+e.message+'</div>';}
+}
+
+function gotoMyTeam(){nav('meinteam');loadTeamByCode(currentCode);}
+
+// ============================================================
+// MY TEAM
+// ============================================================
+async function loadTeam(){
+  const code=document.getElementById('mt-codein').value.trim().toUpperCase();
+  currentCode=code;
+  await loadTeamByCode(code);
+}
+
+async function loadTeamByCode(code){
+  if(!code)return;
+  showLoading('Lade Team...');
+  try{
+    const {data:team} = await sb.from('teams').select('*').eq('code',code).single();
+    hideLoading();
+    if(!team){
+      document.getElementById('mt-nocode').style.display='block';
+      document.getElementById('mt-content').innerHTML='';
+      return;
+    }
+    setLocalTeamCache(team); // BUG FIX 2: Cache bei jedem Laden aktualisieren
+    document.getElementById('mt-nocode').style.display='none';
+    renderMyTeam(team);
+  }catch(e){hideLoading();document.getElementById('mt-nocode').style.display='block';}
+}
+
+function renderMyTeam(team){
+  setLocalTeamCache(team); // BUG FIX 2: Cache auch in render sicherstellen
+  const pool=getPool();
+  const order=ROUTE_ORDER[team.route];
+  const done=(team.completed_stations||[]).length;
+  const pct=Math.round((done/8)*100);
+
+  let html=`
+  <div class="card card-y">
+    <div class="flex jb aic wrap gap1 mb1">
+      <div>
+        <div style="font-family:'Bebas Neue';font-size:1.6rem">${team.name}</div>
+        <div class="tiny">👤 ${(team.members||[]).join(' · ')}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-family:'Bebas Neue';font-size:2.2rem;color:var(--g)">${team.points} PTS</div>
+      </div>
+    </div>
+    <div class="flex gap1 aic">
+      <span class="rt rt-${team.route}">ROUTE ${team.route}</span>
+      <span class="tiny">⏰ ${getStartTime()}</span>
+    </div>
+    <div class="progwrap mt1"><div class="progfill" style="width:${pct}%"></div></div>
+    <div class="tiny mt1">${done}/8 Stationen abgeschlossen</div>
+  </div>`;
+
+  order.forEach((sid,idx)=>{
+    const st=pool[sid];
+    const isCompleted=(team.completed_stations||[]).includes(sid);
+    const prevDone=idx===0||(team.completed_stations||[]).includes(order[idx-1]);
+    const isNext=!isCompleted&&prevDone;
+    const isShared=st&&st.isShared;
+    const tasks=team.tasks&&team.tasks[sid];
+
+    let statusBadge='';
+    let cardClass='scard'+(isShared?' shared':'');
+    if(isCompleted){cardClass='scard done';statusBadge=`<span class="sbadge sb-ok">✅ DONE</span>`;}
+    else if(isNext){statusBadge=`<span class="sbadge sb-act">▶ AKTIV</span>`;}
+    else{cardClass+=' locked';statusBadge=`<span class="sbadge sb-lock">🔒</span>`;}
+
+    const sharedTag=isShared?`<span class="rt rt-SHARED" style="font-size:.55rem;margin-left:.3rem">TREFFPUNKT</span>`:'';
+
+    html+=`<div class="${cardClass}">
+      <div class="snum">${String(idx+1).padStart(2,'0')}</div>
+      <div class="flex gap1 aic wrap mb1">${statusBadge}${sharedTag}</div>
+      <div class="sname">${st?st.name:'Station '+sid}</div>
+      ${isNext&&!tasks?`
+        <div style="background:#7B3A0015;border:1px solid #FFB30066;border-radius:4px;padding:.5rem .7rem;margin-top:.7rem;font-size:.8rem">🍺 <strong style="color:#FFB300">Pflicht:</strong> Alle können hier ein Bier Trinken (0,33L oder 0,5L)</div>
+        <div class="alert al-info" style="text-align:center;margin-top:.5rem;font-size:.8rem">🔒 Ihr seid am Kiosk? Aufgaben freischalten!</div>
+        <button class="done-btn" style="background:var(--b);color:var(--d0);margin-top:.5rem" onclick="unlockStation('${sid}','${team.code}')">🔓 AUFGABEN FREISCHALTEN</button>
+      `:''}
+      ${isNext&&tasks?`
+        <div class="tlabel" style="margin-top:.7rem">🏆 TEAM-AUFGABEN – im Modal eine auswählen</div>
+        <div style="background:var(--d2);border-left:3px solid var(--y);padding:.5rem .7rem;border-radius:3px;margin:.3rem 0;font-size:.82rem;line-height:1.5">1: ${tasks.teamTask1||'–'}</div>
+        <div style="background:var(--d2);border-left:3px solid var(--y);padding:.5rem .7rem;border-radius:3px;margin:.3rem 0;font-size:.82rem;line-height:1.5">2: ${tasks.teamTask2||'–'}</div>
+        <span class="ptag ptag-y mt1">+10 PTS</span>
+        <div class="tlabel mt1">🎲 WILDCARD</div>
+        <div class="ttext">${tasks.wildcard}</div>
+        <span class="ptag ptag-p mt1">+5 PTS</span>
+        <div style="background:#7B3A0015;border:1px solid #FFB30066;border-radius:4px;padding:.5rem .7rem;margin:.5rem 0;font-size:.8rem">🍺 <strong style="color:#FFB300">Pflicht:</strong> Alle trinken hier ein Bier (min. 0,33L)</div>
+        <button class="done-btn" onclick="openModal('${sid}','${team.code}')">📸 AUFGABE EINREICHEN</button>
+      `:''}
+    </div>`;
+  });
+
+  document.getElementById('mt-content').innerHTML=html;
+}
+
+// ============================================================
+// UNLOCK STATION
+// ============================================================
+async function unlockStation(sid, code){
+  showLoading('Schalte Aufgaben frei...');
+  try{
+    const {data:team} = await sb.from('teams').select('*').eq('code',code).single();
+    if(!team) throw new Error('Team nicht gefunden');
+    const drawn = drawTasksForStation(sid);
+    const updatedTasks = {...(team.tasks||{}), [sid]: drawn};
+    const {error} = await sb.from('teams').update({tasks:updatedTasks}).eq('code',code);
+    if(error) throw error;
+    setLocalTeamCache({...team, tasks:updatedTasks});
+    hideLoading();
+    loadTeamByCode(code);
+  }catch(e){ hideLoading(); alert('Fehler: '+e.message); }
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+function selectTask(idx){
+  document.querySelectorAll('.task-option').forEach((el,i)=>{
+    el.style.borderColor = i===idx ? 'var(--y)' : 'var(--d4)';
+    el.style.background  = i===idx ? 'rgba(255,230,0,0.07)' : 'var(--d2)';
+  });
+  if(currentModal) currentModal.chosenTaskIdx = idx;
+}
+
+function openModal(sid,code){
+  currentModal={sid,code,chosenTaskIdx:null};
+  const pool=getPool();
+  document.getElementById('modal-title').textContent=STATION_NAMES[sid]||sid;
+
+  const teamData=getLocalTeamCache(code);
+  const tasks=teamData&&teamData.tasks&&teamData.tasks[sid];
+
+  // Vorherige Wahl wiederherstellen
+  const prevIdx = tasks&&tasks.chosenTask!==null ? tasks.chosenTask : null;
+  if(prevIdx!==null) currentModal.chosenTaskIdx=prevIdx;
+
+  const taskHtml = tasks ? `
+    <div class="tlabel" style="color:var(--y);margin-bottom:.5rem">🏆 WÄHLT EURE TEAM-AUFGABE</div>
+    <div class="task-option" onclick="selectTask(0)" style="background:var(--d2);border:2px solid ${prevIdx===0?'var(--y)':'var(--d4)'};border-radius:6px;padding:.75rem;margin-bottom:.5rem;cursor:pointer;transition:all .15s;${prevIdx===0?'background:rgba(255,230,0,0.07)':''}">
+      <div style="font-family:'Bebas Neue';font-size:.75rem;color:var(--y);letter-spacing:2px;margin-bottom:.3rem">AUFGABE 1</div>
+      <div class="ttext">${tasks.teamTask1||'–'}</div>
+    </div>
+    <div class="task-option" onclick="selectTask(1)" style="background:var(--d2);border:2px solid ${prevIdx===1?'var(--y)':'var(--d4)'};border-radius:6px;padding:.75rem;margin-bottom:.3rem;cursor:pointer;transition:all .15s;${prevIdx===1?'background:rgba(255,230,0,0.07)':''}">
+      <div style="font-family:'Bebas Neue';font-size:.75rem;color:var(--y);letter-spacing:2px;margin-bottom:.3rem">AUFGABE 2</div>
+      <div class="ttext">${tasks.teamTask2||'–'}</div>
+    </div>
+    <span class="ptag ptag-y">+10 PTS</span>
+    <div style="background:var(--d2);border:1px solid var(--p)44;border-radius:6px;padding:.75rem;margin-top:.8rem">
+      <div class="tlabel" style="color:var(--p);margin-bottom:.3rem">🎲 WILDCARD</div>
+      <div class="ttext">${tasks.wildcard}</div>
+      <span class="ptag ptag-p mt1">+5 PTS</span>
+    </div>` : '<div class="tiny cm">Lade Aufgaben...</div>';
+
+  document.getElementById('modal-body').innerHTML=taskHtml;
+  document.getElementById('modal-beer').style.display='block';
+
+  const waNum=getWaNum();
+  const stName=STATION_NAMES[sid]||sid;
+  const tname=teamData?teamData.name:code;
+  const waText=encodeURIComponent(`🏪 FINN'S TOUR DE TRINKHALLE\nTeam: ${tname} (${code})\nStation: ${stName}\n\nHier ist unser Beweis! ✅`);
+  document.getElementById('wa-link').href=waNum?`https://wa.me/${waNum}?text=${waText}`:`https://wa.me/?text=${waText}`;
+  document.getElementById('wa-hint').textContent=waNum?`📞 +${waNum}`:'⚠️ GM hat noch keine Nummer hinterlegt';
+
+  document.getElementById('modal-actions').style.display='block';
+  document.getElementById('modal-done').style.display='none';
+  document.getElementById('st-modal').classList.add('open');
+}
+
+function closeModal(){document.getElementById('st-modal').classList.remove('open');currentModal=null;}
+
+async function submitEvidence(){
+  const{sid,code,chosenTaskIdx}=currentModal;
+  const type=document.getElementById('sub-type').value;
+
+  // Aufgabe muss gewählt sein wenn "team" oder "both"
+  if((type==='team'||type==='both')&&chosenTaskIdx===null){
+    alert('⚠️ Bitte erst eine Team-Aufgabe auswählen (Aufgabe 1 oder 2)!');
+    return;
   }
 
-  const url = new URL(req.url)
-  const team  = url.searchParams.get('team')  || ''
-  const name  = url.searchParams.get('name')  || team
-  const station = url.searchParams.get('station') || ''
+  const pts={team:10,wildcard:5,both:15}[type]||10;
+  showLoading('Speichere...');
+  try{
+    const {data:team}=await sb.from('teams').select('*').eq('code',code).single();
+    if(!team)throw new Error('Team nicht gefunden');
 
-  // Supabase mit Service-Role-Key (hat Zugriff auf settings-Tabelle)
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-  )
+    const newCompleted=[...(team.completed_stations||[])];
+    if(!newCompleted.includes(sid))newCompleted.push(sid);
 
-  const { data, error } = await supabase
-    .from('settings')
-    .select('value')
-    .eq('key', 'gm_wa_number')
-    .single()
+    // Gewählte Aufgabe in tasks speichern
+    const updatedTasks={...(team.tasks||{})};
+    if(updatedTasks[sid]) updatedTasks[sid].chosenTask=chosenTaskIdx;
 
-  if (error || !data?.value) {
-    return new Response('WA-Nummer nicht konfiguriert. Bitte im GM-Panel eintragen.', {
-      status: 500,
-      headers: { 'Content-Type': 'text/plain; charset=utf-8' }
-    })
+    // Speed-Bonus: erstes Team das ALLE 8 Stationen abschließt bekommt +15
+    let speedBonus=0;
+    if(newCompleted.length===8){
+      const {data:allTeams}=await sb.from('teams').select('completed_stations');
+      const alreadyDone=(allTeams||[]).filter(t=>(t.completed_stations||[]).length===8);
+      if(alreadyDone.length===0) speedBonus=15; // wir sind die ersten!
+    }
+
+    const totalPts=team.points+pts+speedBonus;
+    const {error:e1}=await sb.from('teams').update({points:totalPts,completed_stations:newCompleted,tasks:updatedTasks}).eq('code',code);
+    if(e1)throw e1;
+
+    const note=speedBonus?'⚡ Speed-Bonus +15':'';
+    const {error:e2}=await sb.from('submissions').insert({id:Date.now(),team_code:code,station_id:sid,type,submitted_at:Date.now(),status:'approved',points:pts+speedBonus,note});
+    if(e2)console.warn('Sub log error:',e2);
+
+    hideLoading();
+    document.getElementById('modal-actions').style.display='none';
+    // Speed-Bonus-Nachricht
+    document.getElementById('modal-done').innerHTML=speedBonus
+      ?'<div class="alert al-ok" style="text-align:center">✅ Aufgabe abgehakt! 🎉</div><div class="alert al-warn" style="text-align:center">⚡ SPEED-BONUS! +15 Punkte als erstes fertiges Team!</div>'
+      :'<div class="alert al-ok" style="text-align:center">✅ Aufgabe abgehakt! 🎉</div>';
+    document.getElementById('modal-done').style.display='block';
+    setTimeout(()=>{closeModal();loadTeamByCode(code);},speedBonus?2500:1200);
+  }catch(e){hideLoading();alert('Fehler: '+e.message);}
+}
+
+// ============================================================
+// LEADERBOARD
+// ============================================================
+async function renderLB(){
+  try{
+    const {data:teams}=await sb.from('teams').select('*').order('points',{ascending:false});
+    const el=document.getElementById('lb-list');
+    const emp=document.getElementById('lb-empty');
+    if(!teams||!teams.length){el.innerHTML='';emp.style.display='block';return;}
+    emp.style.display='none';
+    const icons=['🥇','🥈','🥉'];
+    el.innerHTML=teams.map((t,i)=>{
+      const r=i+1;
+      return `<div class="lbrow${r<=3?' r'+r:''}">
+        <div class="lbrank">${r<=3?icons[r-1]:r}</div>
+        <div style="flex:1">
+          <div class="lbname">${t.name}</div>
+          <div class="tiny">${(t.members||[]).length} Mitglieder · ${(t.completed_stations||[]).length}/8 · <span class="rt rt-${t.route}">ROUTE ${t.route}</span></div>
+        </div>
+        <div class="lbpts">${t.points}</div>
+      </div>`;
+    }).join('');
+  }catch(e){console.error(e);}
+}
+
+// ============================================================
+// ADMIN
+// ============================================================
+function adminLogin(){
+  if(document.getElementById('adm-pw').value===getPW()){
+    document.getElementById('adm-login').style.display='none';
+    document.getElementById('adm-panel').style.display='block';
+    renderAdmSubs();renderAdmTeams();
+  }else{
+    document.getElementById('adm-pw-err').style.display='block';
   }
+}
 
-  const text = encodeURIComponent(
-    `🏪 FINN'S TOUR DE TRINKHALLE\nTeam: ${name} (${team})\nStation: ${station}\n\nHier ist unser Check-in! 📍`
-  )
+async function renderAdmSubs(){
+  showLoading('Lade Einreichungen...');
+  try{
+    const {data:subs}=await sb.from('submissions').select('*').order('submitted_at',{ascending:false});
+    const {data:teams}=await sb.from('teams').select('code,name,route');
+    hideLoading();
+    const el=document.getElementById('adm-subs-list');
+    const emp=document.getElementById('adm-subs-empty');
+    const pool=getPool();
+    document.getElementById('adm-sub-count').textContent=`${(subs||[]).length} Einreichungen total`;
+    if(!subs||!subs.length){el.innerHTML='';emp.style.display='block';return;}
+    emp.style.display='none';
+    const typeLabels={team:'🏆 Team',wildcard:'🎲 Wildcard',both:'✅ Beide'};
+    el.innerHTML=subs.map(sub=>{
+      const t=(teams||[]).find(x=>x.code===sub.team_code);
+      const st=pool[sub.station_id];
+      return `<div class="subcard">
+        <div class="flex jb aic wrap gap1 mb1">
+          <div>
+            <div style="font-family:'Bebas Neue';font-size:1rem">${t?t.name:sub.team_code} ${t?`<span class="rt rt-${t.route}">ROUTE ${t.route}</span>`:''}</div>
+            <div class="tiny">${st?st.name:sub.station_id} · ${typeLabels[sub.type]||sub.type}</div>
+            <div class="tiny">${new Date(sub.submitted_at).toLocaleString('de-DE')}</div>
+          </div>
+          <span class="sbadge sb-ok">✅ +${sub.points} PTS</span>
+        </div>
+        <div class="flex gap1 aic wrap">
+          <input type="number" class="pts-inp" id="sp-${sub.id}" value="${sub.points}" min="0" max="30">
+          <button class="btn btn-sm" style="background:var(--g);color:var(--d0)" onclick="adjustSubPts(${sub.id},'${sub.team_code}',${sub.points})">PUNKTE ANPASSEN</button>
+          <button class="btn btn-sm" style="background:none;border:1px solid var(--p);color:var(--p)" onclick="removeSubmission(${sub.id},'${sub.team_code}',${sub.points},'${sub.station_id}')">🗑 LÖSCHEN</button>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){hideLoading();console.error(e);}
+}
 
-  // 302-Redirect → Nummer nie im Browser sichtbar
-  return new Response(null, {
-    status: 302,
-    headers: { Location: `https://wa.me/${data.value}?text=${text}` }
-  })
-})
+async function adjustSubPts(subId, teamCode, oldPts){
+  const newPts=parseInt(document.getElementById('sp-'+subId)?.value)||0;
+  const diff=newPts-oldPts;
+  showLoading('Aktualisiere...');
+  try{
+    await sb.from('submissions').update({points:newPts}).eq('id',subId);
+    const {data:team}=await sb.from('teams').select('points').eq('code',teamCode).single();
+    await sb.from('teams').update({points:team.points+diff}).eq('code',teamCode);
+    hideLoading();renderAdmSubs();updateStats();
+  }catch(e){hideLoading();alert('Fehler: '+e.message);}
+}
+
+async function removeSubmission(subId, teamCode, pts, stationId){
+  if(!confirm('Einreichung löschen und Punkte abziehen?'))return;
+  showLoading('Lösche...');
+  try{
+    await sb.from('submissions').delete().eq('id',subId);
+    const {data:team}=await sb.from('teams').select('points,completed_stations').eq('code',teamCode).single();
+    const newCompleted=(team.completed_stations||[]).filter(s=>s!==stationId);
+    await sb.from('teams').update({points:Math.max(0,team.points-pts),completed_stations:newCompleted}).eq('code',teamCode);
+    hideLoading();renderAdmSubs();updateStats();
+  }catch(e){hideLoading();alert('Fehler: '+e.message);}
+}
+
+async function renderAdmTeams(){
+  showLoading('Lade Teams...');
+  try{
+    const {data:teams}=await sb.from('teams').select('*').order('points',{ascending:false});
+    hideLoading();
+    const el=document.getElementById('adm-teams-list');
+    if(!teams||!teams.length){el.innerHTML='<p class="cm">Keine Teams.</p>';return;}
+    el.innerHTML=teams.map(t=>`
+      <div class="subcard">
+        <div class="flex jb aic wrap gap1">
+          <div>
+            <div style="font-family:'Bebas Neue';font-size:1.1rem">${t.name} <span class="rt rt-${t.route}">ROUTE ${t.route}</span></div>
+            <div class="tiny">Code: <strong>${t.code}</strong> · ${(t.members||[]).join(', ')}</div>
+            <div class="tiny">${(t.completed_stations||[]).length}/8 Stationen · ${new Date(t.registered_at).toLocaleString('de-DE')}</div>
+          </div>
+          <div style="text-align:right"><div style="font-family:'Bebas Neue';font-size:1.8rem;color:var(--g)">${t.points}</div><div class="tiny cm">PTS</div></div>
+        </div>
+        <div class="flex gap1 aic mt2 wrap">
+          <input type="number" class="pts-inp" id="mp-${t.code}" value="5" min="-99" max="99">
+          <button class="btn btn-sm btn-g" onclick="manPts('${t.code}',1)">+ PTS</button>
+          <button class="btn btn-sm" style="background:none;border:1px solid var(--p);color:var(--p)" onclick="manPts('${t.code}',-1)">– PTS</button>
+          <button class="btn btn-sm" style="background:none;border:1px solid var(--m);color:var(--m)" onclick="deleteTeam('${t.code}')">🗑</button>
+        </div>
+      </div>`).join('');
+  }catch(e){hideLoading();console.error(e);}
+}
+
+async function manPts(code,dir){
+  const v=parseInt(document.getElementById('mp-'+code)?.value)||0;
+  showLoading('Aktualisiere...');
+  try{
+    const {data:team}=await sb.from('teams').select('points').eq('code',code).single();
+    await sb.from('teams').update({points:team.points+(dir*v)}).eq('code',code);
+    hideLoading();renderAdmTeams();updateStats();
+  }catch(e){hideLoading();alert('Fehler: '+e.message);}
+}
+
+async function deleteTeam(code){
+  if(!confirm('Team und alle Einreichungen löschen?'))return;
+  showLoading('Lösche...');
+  try{
+    await sb.from('submissions').delete().eq('team_code',code);
+    await sb.from('teams').delete().eq('code',code);
+    hideLoading();renderAdmTeams();updateStats();
+  }catch(e){hideLoading();alert('Fehler: '+e.message);}
+}
+
+// ============================================================
+// POOL EDITOR
+// ============================================================
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+
+function renderPoolEditor(){
+  const pool=getPool();
+  const teamTasks=pool.teamTasks||[];
+  const wildcards=pool.wildcards||[];
+  const el=document.getElementById('pool-editor');
+  const makeList=(arr,type)=>arr.map((t,i)=>`
+    <div class="task-item">
+      <input class="finput" value="${esc(t)}" id="${type}-${i}" style="font-size:14px">
+      <button class="rm-btn" onclick="rmTask('${type}',${i})">✕</button>
+    </div>`).join('');
+  el.innerHTML=`
+    <div class="pool-station">
+      <div class="flex jb aic wrap gap1 mb1">
+        <div class="pool-sname" style="color:var(--y)">🏆 TEAM-AUFGABEN (${teamTasks.length})</div>
+        <span class="tiny cm">2 zufällige pro Station</span>
+      </div>
+      <div id="list-team">${makeList(teamTasks,'team')}</div>
+      <button class="add-task-btn" onclick="addTask('team')">+ AUFGABE HINZUFÜGEN</button>
+    </div>
+    <div class="pool-station mt2">
+      <div class="flex jb aic wrap gap1 mb1">
+        <div class="pool-sname" style="color:var(--p)">🎲 WILDCARDS (${wildcards.length})</div>
+        <span class="tiny cm">1 zufällige pro Station</span>
+      </div>
+      <div id="list-wildcard">${makeList(wildcards,'wildcard')}</div>
+      <button class="add-task-btn" onclick="addTask('wildcard')">+ WILDCARD HINZUFÜGEN</button>
+    </div>`;
+}
+
+function addTask(type){
+  const pool=getPool();
+  if(!Array.isArray(pool.teamTasks))pool.teamTasks=[];
+  if(!Array.isArray(pool.wildcards))pool.wildcards=[];
+  const text=prompt(type==='team'?'Neue Team-Aufgabe:':'Neue Wildcard:','');
+  if(text&&text.trim()){
+    if(type==='team') pool.teamTasks.push(text.trim());
+    else pool.wildcards.push(text.trim());
+    _pool=pool; renderPoolEditor();
+  }
+}
+
+function rmTask(type,idx){
+  if(!confirm('Aufgabe löschen?'))return;
+  const pool=getPool();
+  if(type==='team') pool.teamTasks.splice(idx,1);
+  else pool.wildcards.splice(idx,1);
+  _pool=pool; renderPoolEditor();
+}
+
+async function savePool(){
+  const pool=getPool();
+  pool.teamTasks=Array.from(document.querySelectorAll('[id^="team-"]') ).map(i=>i.value.trim()).filter(Boolean);
+  pool.wildcards=Array.from(document.querySelectorAll('[id^="wildcard-"]') ).map(i=>i.value.trim()).filter(Boolean);
+  showLoading('Speichere Aufgaben...');
+  try{
+    const {error}=await sb.from('settings').upsert({key:'task_pool',value:JSON.stringify(pool)});
+    if(error) throw error;
+    _pool=pool;
+    hideLoading();
+    const msg=document.getElementById('pool-save-msg');msg.style.display='block';
+    setTimeout(()=>msg.style.display='none',2500);
+  }catch(e){ hideLoading(); alert('❌ Fehler: '+e.message); }
+}
+
+
+// ============================================================
+// SETTINGS
+// ============================================================
+function saveWaNum(){
+  const v=document.getElementById('wa-num-input').value.trim().replace(/\D/g,'');
+  localStorage.setItem('ft_wa',v);
+  const m=document.getElementById('wa-save-msg');m.style.display='block';setTimeout(()=>m.style.display='none',2000);
+}
+
+async function saveStartTime(){
+  const v=document.getElementById('start-time-input').value||'18:00';
+  showLoading('Speichere Startzeit...');
+  try{
+    const {error}=await sb.from('settings').upsert({key:'start_time',value:v});
+    if(error) throw error;
+    _startTime=v;
+    hideLoading();
+    const m=document.getElementById('st-save-msg');m.style.display='block';
+    setTimeout(()=>m.style.display='none',2000);
+  }catch(e){ hideLoading(); alert('❌ Fehler: '+e.message); }
+}
+
+async function changePw(){
+  const pw=document.getElementById('new-pw').value.trim();
+  if(!pw){alert('Bitte Passwort eingeben!');return;}
+  showLoading('Speichere Passwort...');
+  try{
+    const {error} = await sb.from('settings').upsert({key:'gm_password', value:pw});
+    if(error) throw error;
+    _gmPw = pw;
+    hideLoading();
+    document.getElementById('new-pw').value='';
+    alert('✅ Passwort gespeichert! Gilt jetzt auf allen Geräten.');
+  }catch(e){
+    hideLoading();
+    alert('❌ Fehler beim Speichern: '+e.message);
+  }
+}
+
+// ============================================================
+// STATS
+// ============================================================
+async function updateStats(){
+  try{
+    const {data:teams}=await sb.from('teams').select('members,completed_stations');
+    const {data:subs}=await sb.from('submissions').select('id');
+    const totalPlayers=(teams||[]).reduce((s,t)=>s+(t.members||[]).length,0);
+    const totalDone=(teams||[]).reduce((s,t)=>s+(t.completed_stations||[]).length,0);
+    document.getElementById('st-teams').textContent=(teams||[]).length;
+    document.getElementById('st-players').textContent=totalPlayers;
+    document.getElementById('st-subs').textContent=(subs||[]).length;
+    document.getElementById('st-done').textContent=totalDone;
+  }catch(e){}
+}
+
+// ============================================================
+// HOME MAP (Leaflet + CartoDB Positron = Apple Maps Style)
+// ============================================================
+let _homeMap = null;
+
+function initHomeMap(){
+  const el = document.getElementById('home-map');
+  if(!el) return;
+  if(_homeMap){ _homeMap.invalidateSize(); return; }
+  _homeMap = L.map('home-map', {
+    center:[51.228, 6.820], zoom:13,
+    zoomControl:false, attributionControl:false,
+    dragging:true, scrollWheelZoom:false, doubleClickZoom:false
+  });
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(_homeMap);
+  const shared = [[51.2345,6.8615],[51.2309,6.8166],[51.2304,6.8094],[51.2279,6.7896],[51.2265,6.7757]];
+  const sLabels = ['1','3','5','7','8'];
+  const excl = {A:[[51.2239,6.8639],[51.2288,6.8148],[51.2286,6.7879]],B:[[51.2369,6.8590],[51.2283,6.8149],[51.2371,6.7934]],C:[[51.2353,6.8617],[51.2226,6.8028],[51.2286,6.7724]]};
+  const colors = {A:'#FF6B35',B:'#00D4FF',C:'#39FF14'};
+  Object.keys(excl).forEach(r=>{
+    const coords=[shared[0],excl[r][0],shared[1],excl[r][1],shared[2],excl[r][2],shared[3],shared[4]];
+    L.polyline(coords,{color:colors[r],weight:3.5,opacity:0.8,dashArray:'8,5'}).addTo(_homeMap);
+  });
+  Object.keys(excl).forEach(r=>{
+    excl[r].forEach(ll=>{
+      L.circleMarker(ll,{radius:6,fillColor:colors[r],color:'#fff',weight:2,fillOpacity:0.9}).addTo(_homeMap);
+    });
+  });
+  shared.forEach((ll,i)=>{
+    const isFin=i===4;
+    L.circleMarker(ll,{radius:isFin?11:8,fillColor:isFin?'#FFE600':'#FF7A00',color:'#fff',weight:2,fillOpacity:1}).addTo(_homeMap).bindTooltip(sLabels[i],{permanent:true,direction:'center',className:'map-num'});
+  });
+}
+
+
+// ============================================================
+// INIT
+// ============================================================
+document.getElementById('st-modal').addEventListener('click',e=>{
+  if(e.target===document.getElementById('st-modal'))closeModal();
+});
+
+(async()=>{
+  const {url,key}=getSavedConfig();
+  if(url&&key){
+    showLoading('Verbinde...');
+    try{
+      await initSupabase(url,key);
+      hideLoading();
+      setConnected(true);
+      showApp();
+      subscribeRealtime();
+      loadGmPassword();
+      loadPool();
+      loadStartTime();
+      setTimeout(initHomeMap, 500);
+    }catch(e){
+      hideLoading();
+      setConnected(false);
+      showSetup();
+    }
+  }else{
+    showSetup();
+  }
+})();
+</script>
+</body>
+</html>
